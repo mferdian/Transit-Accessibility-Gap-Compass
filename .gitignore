@@ -1,9 +1,7 @@
 # ============================
-# Backend (FastAPI / Python)
+# Backend (FastAPI / Python, dikelola via uv)
 # ============================
 backend/.venv/
-backend/venv/
-backend/env/
 backend/__pycache__/
 backend/**/__pycache__/
 backend/*.pyc
@@ -25,12 +23,10 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/build/
-frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 frontend/*.tsbuildinfo
 frontend/next-env.d.ts
-frontend/.vercel/
 
 # ============================
 # Umum (Editor, OS, Logs)
@@ -43,14 +39,9 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
 # ============================
 # Misc
 # ============================
 .env
-.venv/
-venv/
-env/
-node_modules/
 *.pem
