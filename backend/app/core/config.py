@@ -5,9 +5,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Transit Gap Compass API"
-    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Transit Accessibility Gap Compass"
+    API_V1_STR: str = "/api"
     ENVIRONMENT: str = "development"
+    
+    # Provider Modes
+    DATA_SOURCE_MODE: str = "mock"
+    GEO_API_MODE: str = "mock"
+    VISION_MODE: str = "mock"
+
+    # Credentials & Paths
+    EXCEL_FILE_PATH: str = "data/kelurahan_data.xlsx"
+    GEOMAPID_API_KEY: str = ""
+    GEOMAPID_API_URL: str = "https://api.mapid.io/v1"
+    VLM_API_KEY: str = ""
+    VLM_PROVIDER: str = "gemini"
 
     # CORS Origins.
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins, e.g: '["http://localhost:3000"]'

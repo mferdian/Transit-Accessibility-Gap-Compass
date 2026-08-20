@@ -1,0 +1,9 @@
+fastapi
+geopandas
+pandas
+shapely
+scikit-learn
+pydantic-settings
+httpx
+openpyxl
+numpy
