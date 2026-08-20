@@ -29,9 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routers.gap_map import router as gap_map_router
+
 # Include Routers
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(transit_router, prefix=settings.API_V1_STR)
+app.include_router(gap_map_router, prefix=settings.API_V1_STR)
 
 
 # Global Exception Handler
