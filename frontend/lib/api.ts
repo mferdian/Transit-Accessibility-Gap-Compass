@@ -25,3 +25,32 @@ export async function fetchGapMap(params?: SKAParameters): Promise<GeoJSONFeatur
   
   return response.json();
 }
+
+export async function fetchRecommendations(
+  params?: SKAParameters,
+  threshold_ska: number = 0.5,
+  service_radius: number = 400
+): Promise<any> { // Will be typed as RecommendationResponse
+  const url = new URL(`${API_BASE_URL}/api/recommendations`);
+  if (params) {
+    url.searchParams.append("w1", params.w1.toString());
+    url.searchParams.append("w2", params.w2.toString());
+    url.searchParams.append("w3", params.w3.toString());
+    url.searchParams.append("w4", params.w4.toString());
+  }
+  url.searchParams.append("threshold_ska", threshold_ska.toString());
+  url.searchParams.append("service_radius", service_radius.toString());
+  
+  const response = await fetch(url.toString(), {
+    headers: {
+      "Accept": "application/json"
+    },
+    cache: 'no-store' 
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Error fetching recommendations: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
