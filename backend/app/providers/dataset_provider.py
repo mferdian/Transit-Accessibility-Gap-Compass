@@ -45,12 +45,77 @@ class ExcelDatasetProvider(BaseDatasetProvider):
         # or just raise NotImplementedError until the structure is confirmed.
         raise NotImplementedError("ExcelDatasetProvider is not fully implemented yet.")
 
+class GeoMapidDatasetProvider(BaseDatasetProvider):
+    _cache: Optional[gpd.GeoDataFrame] = None
+    _cache_time: Optional[float] = None
+    _cache_ttl: float = 300.0  # 5 minutes
+
+    def load_kelurahan_geodataframe(self) -> gpd.GeoDataFrame:
+        """Loads kelurahan data directly from GEO MAPID Layer API with caching."""
+        import time
+
+        # Return cached data if available and fresh
+        if (GeoMapidDatasetProvider._cache is not None 
+            and GeoMapidDatasetProvider._cache_time is not None
+            and (time.time() - GeoMapidDatasetProvider._cache_time) < GeoMapidDatasetProvider._cache_ttl):
+            return GeoMapidDatasetProvider._cache.copy()
+
+        if not settings.GEOMAPID_API_KEY or not settings.GEOMAPID_LAYER_ID:
+            raise ValueError("GEOMAPID_API_KEY and GEOMAPID_LAYER_ID must be set in .env")
+            
+        import httpx
+        url = f"{settings.GEOMAPID_API_URL}?api_key={settings.GEOMAPID_API_KEY}&layer_id={settings.GEOMAPID_LAYER_ID}"
+        if settings.GEOMAPID_PROJECT_ID:
+            url += f"&project_id={settings.GEOMAPID_PROJECT_ID}"
+            
+        response = httpx.get(url, timeout=60.0)
+        response.raise_for_status()
+        geojson_data = response.json()
+        
+        # Convert to GeoDataFrame
+        gdf = gpd.GeoDataFrame.from_features(geojson_data["features"])
+        
+        # Map required properties
+        # The mapid layer has 'DESA', 'KEPADATAN PENDUDUK 2024'
+        if 'DESA' in gdf.columns:
+            gdf['nama'] = gdf['DESA']
+        if 'KEPADATAN PENDUDUK 2024' in gdf.columns:
+            gdf['kepadatan'] = gdf['KEPADATAN PENDUDUK 2024']
+            
+        # Add mock or estimated values for SKA calculation if they don't exist
+        if 'blind_spot_pct' not in gdf.columns:
+            import numpy as np
+            # Random estimation for simulation if not in layer
+            np.random.seed(42)  # Fixed seed for consistent results
+            gdf['blind_spot_pct'] = np.random.uniform(10, 40, size=len(gdf))
+            
+        if 'jarak_first_mile' not in gdf.columns:
+            import numpy as np
+            np.random.seed(43)
+            gdf['jarak_first_mile'] = np.random.uniform(300, 1500, size=len(gdf))
+            
+        if 'frekuensi' not in gdf.columns:
+            import numpy as np
+            np.random.seed(44)
+            gdf['frekuensi'] = np.random.uniform(2, 10, size=len(gdf))
+            
+        # Ensure CRS is set to EPSG:4326
+        gdf.set_crs(epsg=4326, inplace=True, allow_override=True)
+
+        # Cache the result
+        GeoMapidDatasetProvider._cache = gdf
+        GeoMapidDatasetProvider._cache_time = time.time()
+
+        return gdf.copy()
+
 def get_dataset_provider() -> BaseDatasetProvider:
     """Factory function to get the appropriate dataset provider based on settings."""
     if settings.DATA_SOURCE_MODE == "mock":
         return MockDatasetProvider()
     elif settings.DATA_SOURCE_MODE == "excel":
         return ExcelDatasetProvider()
+    elif settings.DATA_SOURCE_MODE == "geomapid":
+        return GeoMapidDatasetProvider()
     else:
         # Fallback to mock
         return MockDatasetProvider()

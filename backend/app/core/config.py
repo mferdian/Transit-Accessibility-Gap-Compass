@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     # Credentials & Paths
     EXCEL_FILE_PATH: str = "data/kelurahan_data.xlsx"
     GEOMAPID_API_KEY: str = ""
-    GEOMAPID_API_URL: str = "https://api.mapid.io/v1"
+    GEOMAPID_API_URL: str = "https://geoserver.mapid.io/layers_new/get_layer"
+    GEOMAPID_LAYER_ID: str = ""
+    GEOMAPID_PROJECT_ID: str = ""
     VLM_API_KEY: str = ""
     VLM_PROVIDER: str = "gemini"
 

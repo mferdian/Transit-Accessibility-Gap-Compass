@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { GeoJSONFeatureCollection } from '@/lib/types';
+import { GeoJSONFeatureCollection, RecommendationPoint } from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamically import MapContainer and other components from react-leaflet
@@ -10,14 +10,17 @@ import 'leaflet/dist/leaflet.css';
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const GeoJSON = dynamic(() => import('react-leaflet').then(mod => mod.GeoJSON), { ssr: false });
+const CircleMarker = dynamic(() => import('react-leaflet').then(mod => mod.CircleMarker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 interface MapViewProps {
   geoData: GeoJSONFeatureCollection | null;
+  recommendationData?: RecommendationPoint[];
   onSimulationClick?: (lat: number, lon: number) => void;
   simulationMode?: boolean;
 }
 
-export default function MapView({ geoData, onSimulationClick, simulationMode = false }: MapViewProps) {
+export default function MapView({ geoData, recommendationData, onSimulationClick, simulationMode = false }: MapViewProps) {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -106,6 +109,25 @@ export default function MapView({ geoData, onSimulationClick, simulationMode = f
             onEachFeature={onEachFeature}
           />
         )}
+        {recommendationData && recommendationData.map((rec, idx) => (
+          <CircleMarker
+            key={`rec-${idx}`}
+            center={[rec.lat, rec.lon]}
+            radius={8}
+            pathOptions={{ color: 'white', weight: 2, fillColor: '#2563eb', fillOpacity: 0.9 }}
+          >
+            <Popup>
+              <div className="p-1">
+                <h3 className="font-bold text-base mb-1">{rec.nama || `Rekomendasi Halte ${rec.rank}`}</h3>
+                <div className="text-sm">
+                  <div><span className="text-slate-500">Rank:</span> #{rec.rank} ({rec.jenis_rekomendasi})</div>
+                  <div><span className="text-slate-500">Est. Penduduk:</span> {rec.estimasi_penduduk_terlayani.toLocaleString()} jiwa</div>
+                  <div><span className="text-slate-500">Radius Layanan:</span> {rec.radius_layanan} m</div>
+                </div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
       </MapContainer>
       
       {/* Legend overlay */}

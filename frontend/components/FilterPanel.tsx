@@ -7,10 +7,11 @@ interface FilterPanelProps {
   weights: SKAParameters;
   onWeightsChange: (newWeights: SKAParameters) => void;
   onApply: () => void;
+  onToggleRecommendations?: () => void;
   isLoading: boolean;
 }
 
-export default function FilterPanel({ weights, onWeightsChange, onApply, isLoading }: FilterPanelProps) {
+export default function FilterPanel({ weights, onWeightsChange, onApply, onToggleRecommendations, isLoading }: FilterPanelProps) {
   const [localWeights, setLocalWeights] = useState<SKAParameters>(weights);
 
   const handleChange = (key: keyof SKAParameters, value: number) => {
@@ -86,13 +87,25 @@ export default function FilterPanel({ weights, onWeightsChange, onApply, isLoadi
         </div>
       </div>
 
-      <button 
-        onClick={onApply}
-        disabled={isLoading}
-        className="mt-2 w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow hover:opacity-90 transition-all disabled:opacity-50"
-      >
-        {isLoading ? 'Menghitung SKA...' : 'Terapkan Filter SKA'}
-      </button>
+      <div className="flex flex-col gap-2 mt-2">
+        <button 
+          onClick={onApply}
+          disabled={isLoading}
+          className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow hover:opacity-90 transition-all disabled:opacity-50"
+        >
+          {isLoading ? 'Menghitung SKA...' : 'Terapkan Filter SKA'}
+        </button>
+        <button
+          onClick={onToggleRecommendations}
+          disabled={isLoading}
+          className="w-full py-2.5 bg-white border border-slate-200 text-indigo-600 font-semibold rounded-lg shadow-sm hover:bg-slate-50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Lihat Rekomendasi Halte
+        </button>
+      </div>
     </div>
   );
 }

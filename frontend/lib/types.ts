@@ -26,3 +26,20 @@ export interface SKAParameters {
   w3: number;
   w4: number;
 }
+
+export interface RecommendationPoint {
+  lat: number;
+  lon: number;
+  rank: number;
+  estimasi_penduduk_terlayani: number;
+  estimasi_perubahan_ska: number;
+  radius_layanan: number;
+  jenis_rekomendasi: string;
+  nama?: string;
+}
+
+export interface RecommendationResponse {
+  status: string;
+  recommendations: RecommendationPoint[];
+  geojson_layer: GeoJSONFeatureCollection;
+}
