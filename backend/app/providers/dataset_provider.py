@@ -4,6 +4,7 @@ import geopandas as gpd
 from typing import Optional
 from app.providers.base import BaseDatasetProvider
 from app.core.config import settings
+from app.services.local_geojson import load_demografi_gdf
 
 class MockDatasetProvider(BaseDatasetProvider):
     def load_kelurahan_geodataframe(self) -> gpd.GeoDataFrame:
@@ -44,6 +45,11 @@ class ExcelDatasetProvider(BaseDatasetProvider):
         # For now, if we reach here without geometries, we could fallback to mock geometries
         # or just raise NotImplementedError until the structure is confirmed.
         raise NotImplementedError("ExcelDatasetProvider is not fully implemented yet.")
+
+class LocalGeoJSONDatasetProvider(BaseDatasetProvider):
+    def load_kelurahan_geodataframe(self) -> gpd.GeoDataFrame:
+        """Loads local demografi GeoJSON as kelurahan polygons for SKA calculation."""
+        return load_demografi_gdf()
 
 class GeoMapidDatasetProvider(BaseDatasetProvider):
     _cache: Optional[gpd.GeoDataFrame] = None
@@ -116,6 +122,8 @@ def get_dataset_provider() -> BaseDatasetProvider:
         return ExcelDatasetProvider()
     elif settings.DATA_SOURCE_MODE == "geomapid":
         return GeoMapidDatasetProvider()
+    elif settings.DATA_SOURCE_MODE == "local_geojson":
+        return LocalGeoJSONDatasetProvider()
     else:
         # Fallback to mock
         return MockDatasetProvider()

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { GeoJSONFeatureCollection, RecommendationPoint } from '@/lib/types';
+import { GeoJSONFeatureCollection, RecommendationPoint, SelectedFeatureDetail } from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamically import MapContainer and other components from react-leaflet
@@ -12,15 +12,44 @@ const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLaye
 const GeoJSON = dynamic(() => import('react-leaflet').then(mod => mod.GeoJSON), { ssr: false });
 const CircleMarker = dynamic(() => import('react-leaflet').then(mod => mod.CircleMarker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+const MapClickHandler = dynamic(() => import('@/components/MapClickHandler'), { ssr: false });
 
 interface MapViewProps {
   geoData: GeoJSONFeatureCollection | null;
+  gapAreaData?: GeoJSONFeatureCollection | null;
+  recommendationPointData?: GeoJSONFeatureCollection | null;
+  recommendationAreaData?: GeoJSONFeatureCollection | null;
+  demographicData?: GeoJSONFeatureCollection | null;
+  halteExistingData?: GeoJSONFeatureCollection | null;
   recommendationData?: RecommendationPoint[];
+  onFeatureSelect?: (feature: SelectedFeatureDetail) => void;
   onSimulationClick?: (lat: number, lon: number) => void;
+  simulationPoint?: { lat: number; lon: number } | null;
   simulationMode?: boolean;
 }
 
-export default function MapView({ geoData, recommendationData, onSimulationClick, simulationMode = false }: MapViewProps) {
+type MarkerFeature = {
+  key: string;
+  lat: number;
+  lon: number;
+  properties: Record<string, any>;
+  layerName: string;
+  geometryType: string;
+};
+
+export default function MapView({
+  geoData,
+  gapAreaData,
+  recommendationPointData,
+  recommendationAreaData,
+  demographicData,
+  halteExistingData,
+  recommendationData,
+  onFeatureSelect,
+  onSimulationClick,
+  simulationPoint,
+  simulationMode = false
+}: MapViewProps) {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -45,6 +74,76 @@ export default function MapView({ geoData, recommendationData, onSimulationClick
       dashArray: '3',
       fillOpacity: 0.7
     };
+  };
+
+  const styleMapidPolygon = (color: string, fillOpacity: number) => {
+    return (feature: any) => ({
+      fillColor: feature?.properties?.gap_score ? getSKAColor(feature.properties.gap_score) : color,
+      weight: 1,
+      opacity: 0.9,
+      color,
+      fillOpacity
+    });
+  };
+
+  const bindSelectableFeature = (color: string, fillOpacity: number) => {
+    return (feature: any, layer: any) => {
+      const properties = feature.properties || {};
+      layer.on({
+        click: () => {
+          onFeatureSelect?.({
+            layerKey: properties._layer_key || 'unknown',
+            layerName: properties._layer_name || 'Layer MAPID',
+            geometryType: feature.geometry?.type || 'Unknown',
+            properties,
+          });
+        },
+        mouseover: (e: any) => {
+          e.target.setStyle?.({ weight: 3, fillOpacity: Math.min(fillOpacity + 0.22, 0.55) });
+        },
+        mouseout: (e: any) => {
+          e.target.setStyle?.(styleMapidPolygon(color, fillOpacity)(feature));
+        }
+      });
+    };
+  };
+
+  const extractPointMarkers = (collection?: GeoJSONFeatureCollection | null): MarkerFeature[] => {
+    if (!collection?.features) return [];
+
+    const markers: MarkerFeature[] = [];
+
+    collection.features.forEach((feature, featureIndex) => {
+      const geometry = feature.geometry || {};
+      const properties = feature.properties || {};
+      const layerName = properties._layer_name || collection.layer_name || 'Titik Rekomendasi';
+      const geometryType = geometry.type || 'Unknown';
+
+      const pushPoint = (coords: any, pointIndex: number) => {
+        if (!Array.isArray(coords) || coords.length < 2) return;
+        const [lon, lat] = coords;
+        if (typeof lat !== 'number' || typeof lon !== 'number') return;
+
+        markers.push({
+          key: `${properties.id || properties.fid || featureIndex}-${pointIndex}`,
+          lat,
+          lon,
+          properties,
+          layerName,
+          geometryType,
+        });
+      };
+
+      if (geometryType === 'Point') {
+        pushPoint(geometry.coordinates, 0);
+      } else if (geometryType === 'MultiPoint') {
+        geometry.coordinates?.forEach(pushPoint);
+      } else if (Array.isArray(geometry.coordinates?.[0]) && typeof geometry.coordinates[0][0] === 'number') {
+        geometry.coordinates.forEach(pushPoint);
+      }
+    });
+
+    return markers;
   };
 
   const onEachFeature = (feature: any, layer: any) => {
@@ -101,6 +200,7 @@ export default function MapView({ geoData, recommendationData, onSimulationClick
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://mapid.io/">GEO MAPID</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Placeholder, in prod use MAPID URL with API key
         />
+        <MapClickHandler enabled={simulationMode} onClick={onSimulationClick} />
         {geoData && (
           <GeoJSON 
             key={JSON.stringify(geoData.features.map(f => f.properties.ska_score))} // Force re-render on data change
@@ -109,6 +209,90 @@ export default function MapView({ geoData, recommendationData, onSimulationClick
             onEachFeature={onEachFeature}
           />
         )}
+        {demographicData && (
+          <GeoJSON
+            key={`demografi-${demographicData.features.length}`}
+            data={demographicData}
+            style={styleMapidPolygon('#059669', 0.12)}
+            onEachFeature={bindSelectableFeature('#059669', 0.12)}
+          />
+        )}
+        {recommendationAreaData && (
+          <GeoJSON
+            key={`area-rekomendasi-${recommendationAreaData.features.length}`}
+            data={recommendationAreaData}
+            style={styleMapidPolygon('#7c3aed', 0.18)}
+            onEachFeature={bindSelectableFeature('#7c3aed', 0.18)}
+          />
+        )}
+        {gapAreaData && (
+          <GeoJSON
+            key={`area-gap-${gapAreaData.features.length}`}
+            data={gapAreaData}
+            style={styleMapidPolygon('#ef4444', 0.28)}
+            onEachFeature={bindSelectableFeature('#ef4444', 0.28)}
+          />
+        )}
+        {extractPointMarkers(recommendationPointData).map((point) => (
+          <CircleMarker
+            key={point.key}
+            center={[point.lat, point.lon]}
+            radius={6}
+            pathOptions={{ color: 'white', weight: 2, fillColor: '#2563eb', fillOpacity: 0.95 }}
+            eventHandlers={{
+              click: () => onFeatureSelect?.({
+                layerKey: point.properties._layer_key || 'titik_rekomendasi',
+                layerName: point.layerName,
+                geometryType: point.geometryType,
+                properties: point.properties,
+                coordinates: [point.lon, point.lat],
+              })
+            }}
+          >
+            <Popup>
+              <div className="p-1">
+                <h3 className="font-bold text-base mb-1">{point.properties.display_name || 'Titik Rekomendasi'}</h3>
+                <div className="text-sm">
+                  {point.properties.rank !== undefined && <div><span className="text-slate-500">Rank:</span> #{point.properties.rank}</div>}
+                  {point.properties.priority_score !== undefined && <div><span className="text-slate-500">Skor Prioritas:</span> {Number(point.properties.priority_score).toFixed(3)}</div>}
+                  {point.properties.CLUSTER_ID !== undefined && <div><span className="text-slate-500">Cluster:</span> {point.properties.CLUSTER_ID}</div>}
+                  {point.properties.CLUSTER_SIZE !== undefined && <div><span className="text-slate-500">Ukuran:</span> {point.properties.CLUSTER_SIZE}</div>}
+                  {point.properties.nearest_gap_distance_m !== undefined && <div><span className="text-slate-500">Jarak ke GAP:</span> {point.properties.nearest_gap_distance_m} m</div>}
+                  <div><span className="text-slate-500">Koordinat:</span> {point.lon.toFixed(5)}, {point.lat.toFixed(5)}</div>
+                </div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
+        {extractPointMarkers(halteExistingData).map((point) => (
+          <CircleMarker
+            key={`halte-${point.key}`}
+            center={[point.lat, point.lon]}
+            radius={5}
+            pathOptions={{ color: '#0f172a', weight: 1, fillColor: '#0891b2', fillOpacity: 0.85 }}
+            eventHandlers={{
+              click: () => onFeatureSelect?.({
+                layerKey: point.properties._layer_key || 'halte_existing',
+                layerName: point.layerName,
+                geometryType: point.geometryType,
+                properties: point.properties,
+                coordinates: [point.lon, point.lat],
+              })
+            }}
+          >
+            <Popup>
+              <div className="p-1">
+                <h3 className="font-bold text-base mb-1">{point.properties.nama_halte || point.properties.display_name || 'Halte Existing'}</h3>
+                <div className="text-sm">
+                  {point.properties.STATUS !== undefined && <div><span className="text-slate-500">Status:</span> {point.properties.STATUS}</div>}
+                  {point.properties.DESA !== undefined && <div><span className="text-slate-500">Kelurahan:</span> {point.properties.DESA}</div>}
+                  {point.properties.KECAMATAN !== undefined && <div><span className="text-slate-500">Kecamatan:</span> {point.properties.KECAMATAN}</div>}
+                  <div><span className="text-slate-500">Koordinat:</span> {point.lon.toFixed(5)}, {point.lat.toFixed(5)}</div>
+                </div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
         {recommendationData && recommendationData.map((rec, idx) => (
           <CircleMarker
             key={`rec-${idx}`}
@@ -128,10 +312,24 @@ export default function MapView({ geoData, recommendationData, onSimulationClick
             </Popup>
           </CircleMarker>
         ))}
+        {simulationPoint && (
+          <CircleMarker
+            center={[simulationPoint.lat, simulationPoint.lon]}
+            radius={10}
+            pathOptions={{ color: '#0f172a', weight: 3, fillColor: '#38bdf8', fillOpacity: 0.85 }}
+          >
+            <Popup>
+              <div className="p-1 text-sm">
+                <div className="font-bold">Titik Simulasi</div>
+                <div>{simulationPoint.lon.toFixed(5)}, {simulationPoint.lat.toFixed(5)}</div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        )}
       </MapContainer>
       
       {/* Legend overlay */}
-      <div className="absolute bottom-6 left-6 z-[20] bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-200">
+      <div className="absolute bottom-6 right-6 z-[20] bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-slate-200">
         <h4 className="font-bold text-sm mb-3">Tingkat Kesenjangan (SKA)</h4>
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-500"></div>Sangat Kritis (&ge; 0.75)</div>
