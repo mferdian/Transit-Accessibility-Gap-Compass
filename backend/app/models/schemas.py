@@ -83,8 +83,15 @@ class VisionAssessmentResponse(BaseModel):
 class SimulateRequest(BaseModel):
     lat: float
     lon: float
+    service_radius: int = 400
 
 
 class SimulateResponse(BaseModel):
+    lat: float
+    lon: float
+    radius_layanan: int
+    area_gap_terdekat: Optional[Dict[str, Any]] = None
+    jumlah_area_terdampak: int
+    estimasi_penurunan_gap_score: float
     estimasi_penduduk_baru: int
     perubahan_ska: Dict[str, float]

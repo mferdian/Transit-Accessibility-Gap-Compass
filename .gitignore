@@ -15,6 +15,14 @@ backend/data/*.geojson
 backend/data/*.csv
 backend/data/*.shp
 backend/data/*.zip
+backend/data/**/*.geojson
+backend/data/**/*.csv
+backend/data/**/*.shp
+backend/data/**/*.zip
+backend/app/data/**/*.geojson
+backend/app/data/**/*.csv
+backend/app/data/**/*.shp
+backend/app/data/**/*.zip
 
 # ============================
 # Frontend (Next.js)

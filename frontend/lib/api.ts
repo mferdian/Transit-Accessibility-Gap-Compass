@@ -1,4 +1,10 @@
-import { GeoJSONFeatureCollection, SKAParameters } from "./types";
+import {
+  GeoJSONFeatureCollection,
+  MapidLayerInfo,
+  MapidLayerKey,
+  SimulationResult,
+  SKAParameters
+} from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -52,5 +58,72 @@ export async function fetchRecommendations(
     throw new Error(`Error fetching recommendations: ${response.statusText}`);
   }
   
+  return response.json();
+}
+
+export async function fetchMapidLayers(): Promise<MapidLayerInfo[]> {
+  const response = await fetch(`${API_BASE_URL}/api/mapid/layers`, {
+    headers: {
+      "Accept": "application/json"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching MAPID layers: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchMapidLayer(layerKey: MapidLayerKey): Promise<GeoJSONFeatureCollection> {
+  const response = await fetch(`${API_BASE_URL}/api/mapid/layers/${layerKey}`, {
+    headers: {
+      "Accept": "application/json"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching MAPID layer ${layerKey}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchLocalLayer(layerKey: "demografi" | "halte_existing"): Promise<GeoJSONFeatureCollection> {
+  const response = await fetch(`${API_BASE_URL}/api/local-layers/${layerKey}`, {
+    headers: {
+      "Accept": "application/json"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching local layer ${layerKey}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function runSimulation(lat: number, lon: number, serviceRadius: number = 400): Promise<SimulationResult> {
+  const response = await fetch(`${API_BASE_URL}/api/simulate`, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      lat,
+      lon,
+      service_radius: serviceRadius
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error running simulation: ${response.statusText}`);
+  }
+
   return response.json();
 }

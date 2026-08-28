@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     GEOMAPID_API_URL: str = "https://geoserver.mapid.io/layers_new/get_layer"
     GEOMAPID_LAYER_ID: str = ""
     GEOMAPID_PROJECT_ID: str = ""
+    GEOMAPID_DEMOGRAPHY_LAYER_ID: str = "6a7c7f9bb879bb821d798582"
+    GEOMAPID_RECOMMENDATION_AREA_LAYER_ID: str = "6a7c7f9bb879bb821d798586"
+    GEOMAPID_GAP_AREA_LAYER_ID: str = "6a7c7f9bb879bb821d798588"
+    GEOMAPID_RECOMMENDATION_POINT_LAYER_ID: str = "6a7c7f9bb879bb821d79858a"
     VLM_API_KEY: str = ""
     VLM_PROVIDER: str = "gemini"
 

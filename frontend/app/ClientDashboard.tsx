@@ -4,8 +4,26 @@ import { useState, useEffect } from 'react';
 import MapView from '@/components/MapView';
 import FilterPanel from '@/components/FilterPanel';
 import RecommendationPanel from '@/components/RecommendationPanel';
-import { SKAParameters, GeoJSONFeatureCollection, RecommendationPoint } from '@/lib/types';
-import { fetchGapMap, fetchRecommendations } from '@/lib/api';
+import LayerTogglePanel from '@/components/LayerTogglePanel';
+import FeatureDetailPanel from '@/components/FeatureDetailPanel';
+import SimulationPanel from '@/components/SimulationPanel';
+import {
+  SKAParameters,
+  GeoJSONFeatureCollection,
+  RecommendationPoint,
+  MapidLayerKey,
+  SelectedFeatureDetail,
+  SimulationResult
+} from '@/lib/types';
+import { fetchGapMap, fetchLocalLayer, fetchMapidLayer, fetchRecommendations, runSimulation } from '@/lib/api';
+
+const defaultLayerVisibility: Record<MapidLayerKey, boolean> = {
+  area_gap: true,
+  titik_rekomendasi: true,
+  area_rekomendasi: false,
+  demografi: false,
+  halte_existing: true,
+};
 
 export default function ClientDashboard() {
   const [weights, setWeights] = useState<SKAParameters>({
@@ -18,6 +36,14 @@ export default function ClientDashboard() {
   const [geoData, setGeoData] = useState<GeoJSONFeatureCollection | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSkaArea, setShowSkaArea] = useState<boolean>(true);
+  const [mapidLayers, setMapidLayers] = useState<Partial<Record<MapidLayerKey, GeoJSONFeatureCollection>>>({});
+  const [visibleLayers, setVisibleLayers] = useState<Record<MapidLayerKey, boolean>>(defaultLayerVisibility);
+  const [loadingLayers, setLoadingLayers] = useState<Partial<Record<MapidLayerKey, boolean>>>({});
+  const [selectedFeature, setSelectedFeature] = useState<SelectedFeatureDetail | null>(null);
+  const [simulationMode, setSimulationMode] = useState<boolean>(false);
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  const [isSimulationLoading, setIsSimulationLoading] = useState<boolean>(false);
 
   // Recommendations state
   const [showRecommendations, setShowRecommendations] = useState<boolean>(false);
@@ -55,9 +81,27 @@ export default function ClientDashboard() {
     }
   };
 
+  const loadMapidLayer = async (layerKey: MapidLayerKey) => {
+    setLoadingLayers((current) => ({ ...current, [layerKey]: true }));
+    try {
+      const data = layerKey === 'demografi' || layerKey === 'halte_existing'
+        ? await fetchLocalLayer(layerKey)
+        : await fetchMapidLayer(layerKey);
+      setMapidLayers((current) => ({ ...current, [layerKey]: data }));
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || `Gagal memuat layer ${layerKey}.`);
+    } finally {
+      setLoadingLayers((current) => ({ ...current, [layerKey]: false }));
+    }
+  };
+
   // Initial load
   useEffect(() => {
     loadData(weights);
+    loadMapidLayer('area_gap');
+    loadMapidLayer('titik_rekomendasi');
+    loadMapidLayer('halte_existing');
   }, []);
 
   const handleApplyFilter = () => {
@@ -71,6 +115,29 @@ export default function ClientDashboard() {
     setShowRecommendations(!showRecommendations);
   };
 
+  const handleToggleMapidLayer = (layerKey: MapidLayerKey) => {
+    const nextVisible = !visibleLayers[layerKey];
+    setVisibleLayers((current) => ({ ...current, [layerKey]: nextVisible }));
+
+    if (nextVisible && !mapidLayers[layerKey]) {
+      loadMapidLayer(layerKey);
+    }
+  };
+
+  const handleSimulationClick = async (lat: number, lon: number) => {
+    setIsSimulationLoading(true);
+    setError(null);
+    try {
+      const result = await runSimulation(lat, lon, 400);
+      setSimulationResult(result);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Gagal menjalankan simulasi.');
+    } finally {
+      setIsSimulationLoading(false);
+    }
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
       <FilterPanel 
@@ -79,6 +146,22 @@ export default function ClientDashboard() {
         onApply={handleApplyFilter}
         onToggleRecommendations={handleToggleRecommendations}
         isLoading={isLoading}
+      />
+
+      <LayerTogglePanel
+        showSkaArea={showSkaArea}
+        onToggleSkaArea={() => setShowSkaArea((current) => !current)}
+        visibleLayers={visibleLayers}
+        onToggleLayer={handleToggleMapidLayer}
+        loadingLayers={loadingLayers}
+      />
+
+      <SimulationPanel
+        result={simulationResult}
+        isLoading={isSimulationLoading}
+        isActive={simulationMode}
+        onToggleMode={() => setSimulationMode((current) => !current)}
+        onCloseResult={() => setSimulationResult(null)}
       />
       
       {showRecommendations && (
@@ -93,6 +176,11 @@ export default function ClientDashboard() {
         />
       )}
 
+      <FeatureDetailPanel
+        feature={selectedFeature}
+        onClose={() => setSelectedFeature(null)}
+      />
+
       {error && (
         <div className="absolute top-6 right-1/2 translate-x-1/2 z-[20] bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <strong>Error: </strong>
@@ -102,8 +190,17 @@ export default function ClientDashboard() {
 
       <div className="w-full h-full relative z-[10]">
         <MapView 
-          geoData={geoData} 
+          geoData={showSkaArea ? geoData : null}
+          gapAreaData={visibleLayers.area_gap ? mapidLayers.area_gap || null : null}
+          recommendationPointData={visibleLayers.titik_rekomendasi ? mapidLayers.titik_rekomendasi || null : null}
+          recommendationAreaData={visibleLayers.area_rekomendasi ? mapidLayers.area_rekomendasi || null : null}
+          demographicData={visibleLayers.demografi ? mapidLayers.demografi || null : null}
+          halteExistingData={visibleLayers.halte_existing ? mapidLayers.halte_existing || null : null}
           recommendationData={showRecommendations ? recommendations : undefined}
+          onFeatureSelect={setSelectedFeature}
+          onSimulationClick={handleSimulationClick}
+          simulationMode={simulationMode}
+          simulationPoint={simulationResult ? { lat: simulationResult.lat, lon: simulationResult.lon } : null}
         />
       </div>
     </div>

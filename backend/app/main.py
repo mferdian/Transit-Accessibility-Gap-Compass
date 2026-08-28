@@ -30,13 +30,19 @@ app.add_middleware(
 )
 
 from app.routers.gap_map import router as gap_map_router
+from app.routers.local_layers import router as local_layers_router
+from app.routers.mapid import router as mapid_router
 from app.routers.recommendation import router as recommendation_router
+from app.routers.simulate import router as simulate_router
 
 # Include Routers
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(transit_router, prefix=settings.API_V1_STR)
 app.include_router(gap_map_router, prefix=settings.API_V1_STR)
+app.include_router(local_layers_router, prefix=settings.API_V1_STR)
+app.include_router(mapid_router, prefix=settings.API_V1_STR)
 app.include_router(recommendation_router, prefix=settings.API_V1_STR)
+app.include_router(simulate_router, prefix=settings.API_V1_STR)
 
 
 # Global Exception Handler
