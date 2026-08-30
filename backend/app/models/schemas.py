@@ -62,21 +62,62 @@ class VisionFeatureDetection(BaseModel):
     has_shelter: bool = False
     has_bench: bool = False
     has_information_board: bool = False
+    has_bus_stop_marker: bool = False
+    route_information_evidence: Optional[str] = None
     roof_damage: bool = False
+    board_legible: bool = True
+    ramp_blocked: bool = False
+    guiding_block_broken: bool = False
     confidence_score: float = 0.0
     bounding_boxes: Optional[Dict[str, List[float]]] = None
 
 
+class AspectScore(BaseModel):
+    key: str
+    label: str
+    score: float
+    max_score: float
+    note: Optional[str] = None
+
+
 class HalteConditionDetail(BaseModel):
     status: str
-    score: int
+    score: float
     features: VisionFeatureDetection
+    aspects: List[AspectScore] = []
     ai_notes: str
+
+
+class VisionImageInput(BaseModel):
+    image_base64: str
+    image_mime_type: Optional[str] = "image/jpeg"
+
+
+class VisionAssessRequest(BaseModel):
+    halte_id: str = "unknown"
+    halte_name: Optional[str] = None
+    # Single-image fields (backward compatible)
+    image_base64: Optional[str] = None
+    image_mime_type: Optional[str] = "image/jpeg"
+    # Multi-image support: analyzed individually, then aggregated.
+    images: List[VisionImageInput] = []
+
+
+class PhotoAssessment(BaseModel):
+    """Per-photo detection result (before aggregation)."""
+    image_index: int
+    features: VisionFeatureDetection
+    score: float
+    status: str
 
 
 class VisionAssessmentResponse(BaseModel):
     halte_id: str
+    halte_name: Optional[str] = None
+    last_update: str
+    source: str
     assessment: HalteConditionDetail
+    photos: List[PhotoAssessment] = []
 
 
 # --- Simulation Models ---

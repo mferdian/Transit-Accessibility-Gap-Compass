@@ -5,6 +5,7 @@ import { SelectedFeatureDetail } from '@/lib/types';
 interface FeatureDetailPanelProps {
   feature: SelectedFeatureDetail | null;
   onClose: () => void;
+  onAssessCondition?: (halteId: string, halteName: string) => void;
 }
 
 const hiddenKeys = new Set(['_layer_key', '_layer_id', '_layer_name', '_geometry_type']);
@@ -17,7 +18,7 @@ function formatValue(value: any) {
   return String(value);
 }
 
-export default function FeatureDetailPanel({ feature, onClose }: FeatureDetailPanelProps) {
+export default function FeatureDetailPanel({ feature, onClose, onAssessCondition }: FeatureDetailPanelProps) {
   if (!feature) return null;
 
   const entries = Object.entries(feature.properties)
@@ -58,6 +59,20 @@ export default function FeatureDetailPanel({ feature, onClose }: FeatureDetailPa
             </div>
           ))}
         </div>
+
+        {feature.layerKey === 'halte_existing' && onAssessCondition && (
+          <button
+            onClick={() =>
+              onAssessCondition(
+                String(feature.properties.id || feature.properties.fid || feature.properties.display_name || 'halte'),
+                String(feature.properties.nama_halte || feature.properties.display_name || 'Halte')
+              )
+            }
+            className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Nilai Kondisi Halte (AI)
+          </button>
+        )}
       </div>
     </div>
   );

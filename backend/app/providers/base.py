@@ -21,6 +21,6 @@ class BaseGeoSpatialProvider(ABC):
 
 class BaseVisionProvider(ABC):
     @abstractmethod
-    def analyze_halte_image(self, image_path_or_url: str) -> Dict[str, Any]:
+    def analyze_halte_image(self, image_base64: str | None = None, mime_type: str = "image/jpeg") -> Dict[str, Any]:
         """Analyzes an image and returns a dictionary matching VisionFeatureDetection schema."""
         pass
