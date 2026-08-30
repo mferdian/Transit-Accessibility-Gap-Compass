@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     GEOMAPID_RECOMMENDATION_POINT_LAYER_ID: str = "6a7c7f9bb879bb821d79858a"
     VLM_API_KEY: str = ""
     VLM_PROVIDER: str = "gemini"
+    VLM_BASE_URL: str = "https://api.openai.com/v1"
+    VLM_MODEL: str = "gpt-4o-mini"
 
     # CORS Origins.
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins, e.g: '["http://localhost:3000"]'

@@ -82,3 +82,51 @@ export interface SimulationResult {
   estimasi_penduduk_baru: number;
   perubahan_ska: Record<string, number>;
 }
+
+export interface VisionFeatureDetection {
+  has_ramp: boolean;
+  has_guiding_block: boolean;
+  has_shelter: boolean;
+  has_bench: boolean;
+  has_information_board: boolean;
+  has_bus_stop_marker: boolean;
+  route_information_evidence?: string | null;
+  roof_damage: boolean;
+  board_legible: boolean;
+  ramp_blocked: boolean;
+  guiding_block_broken: boolean;
+  confidence_score: number;
+  bounding_boxes?: Record<string, number[]> | null;
+}
+
+export interface AspectScore {
+  key: string;
+  label: string;
+  score: number;
+  max_score: number;
+  note?: string | null;
+}
+
+export interface HalteConditionDetail {
+  status: string;
+  score: number;
+  features: VisionFeatureDetection;
+  aspects: AspectScore[];
+  ai_notes: string;
+}
+
+export interface PhotoAssessment {
+  image_index: number;
+  features: VisionFeatureDetection;
+  score: number;
+  status: string;
+}
+
+export interface VisionAssessmentResponse {
+  halte_id: string;
+  halte_name?: string | null;
+  last_update: string;
+  source: string;
+  assessment: HalteConditionDetail;
+  photos?: PhotoAssessment[];
+}

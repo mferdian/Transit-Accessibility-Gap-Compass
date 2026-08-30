@@ -3,7 +3,8 @@ import {
   MapidLayerInfo,
   MapidLayerKey,
   SimulationResult,
-  SKAParameters
+  SKAParameters,
+  VisionAssessmentResponse
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -101,6 +102,79 @@ export async function fetchLocalLayer(layerKey: "demografi" | "halte_existing"):
 
   if (!response.ok) {
     throw new Error(`Error fetching local layer ${layerKey}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export interface VisionImagePayload {
+  image_base64: string;
+  image_mime_type?: string;
+}
+
+export async function assessHalteImages(
+  halteId: string,
+  halteName: string | null,
+  images: VisionImagePayload[]
+): Promise<VisionAssessmentResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/vision/assess`, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      halte_id: halteId,
+      halte_name: halteName,
+      images
+    })
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const body = await response.json();
+      detail = body.detail || detail;
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(`Gagal menilai halte: ${detail}`);
+  }
+
+  return response.json();
+}
+
+export async function assessHalteImage(
+  halteId: string,
+  halteName: string | null,
+  imageBase64?: string,
+  imageMimeType?: string
+): Promise<VisionAssessmentResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/vision/assess`, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      halte_id: halteId,
+      halte_name: halteName,
+      image_base64: imageBase64,
+      image_mime_type: imageMimeType
+    })
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const body = await response.json();
+      detail = body.detail || detail;
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(`Gagal menilai halte: ${detail}`);
   }
 
   return response.json();

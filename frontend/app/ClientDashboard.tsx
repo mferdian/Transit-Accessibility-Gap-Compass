@@ -7,6 +7,7 @@ import RecommendationPanel from '@/components/RecommendationPanel';
 import LayerTogglePanel from '@/components/LayerTogglePanel';
 import FeatureDetailPanel from '@/components/FeatureDetailPanel';
 import SimulationPanel from '@/components/SimulationPanel';
+import HalteConditionPanel from '@/components/HalteConditionPanel';
 import {
   SKAParameters,
   GeoJSONFeatureCollection,
@@ -41,6 +42,7 @@ export default function ClientDashboard() {
   const [visibleLayers, setVisibleLayers] = useState<Record<MapidLayerKey, boolean>>(defaultLayerVisibility);
   const [loadingLayers, setLoadingLayers] = useState<Partial<Record<MapidLayerKey, boolean>>>({});
   const [selectedFeature, setSelectedFeature] = useState<SelectedFeatureDetail | null>(null);
+  const [halteConditionTarget, setHalteConditionTarget] = useState<{ id: string; name: string } | null>(null);
   const [simulationMode, setSimulationMode] = useState<boolean>(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [isSimulationLoading, setIsSimulationLoading] = useState<boolean>(false);
@@ -179,7 +181,16 @@ export default function ClientDashboard() {
       <FeatureDetailPanel
         feature={selectedFeature}
         onClose={() => setSelectedFeature(null)}
+        onAssessCondition={(id, name) => setHalteConditionTarget({ id, name })}
       />
+
+      {halteConditionTarget && (
+        <HalteConditionPanel
+          halteId={halteConditionTarget.id}
+          halteName={halteConditionTarget.name}
+          onClose={() => setHalteConditionTarget(null)}
+        />
+      )}
 
       {error && (
         <div className="absolute top-6 right-1/2 translate-x-1/2 z-[20] bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
