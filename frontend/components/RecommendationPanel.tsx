@@ -11,17 +11,17 @@ interface RecommendationPanelProps {
 
 export default function RecommendationPanel({ recommendations, isLoading, onClose, onItemClick }: RecommendationPanelProps) {
   return (
-    <div className="absolute top-6 right-6 z-[20] w-80 max-h-[80vh] flex flex-col bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-      <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div className="absolute top-5 right-5 z-[20] w-[21rem] max-h-[82vh] flex flex-col bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200/90 overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
         <div>
-          <h2 className="text-lg font-bold text-slate-800">Rekomendasi Halte</h2>
-          <p className="text-xs text-slate-500">Berdasarkan SKA Tertinggi</p>
+          <h2 className="text-xs font-bold text-slate-900 tracking-tight">Rekomendasi Halte Baru</h2>
+          <p className="text-[10px] text-slate-500 font-normal">Prioritas berdasarkan SKA tertinggi</p>
         </div>
         <button 
           onClick={onClose}
-          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+          className="grid h-6 w-6 place-items-center rounded text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition-colors"
         >
-          <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

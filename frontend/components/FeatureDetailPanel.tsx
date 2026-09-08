@@ -10,9 +10,14 @@ interface FeatureDetailPanelProps {
 
 const hiddenKeys = new Set(['_layer_key', '_layer_id', '_layer_name', '_geometry_type']);
 
-function formatValue(value: any) {
+function formatValue(key: string, value: any) {
   if (value === null || value === undefined || value === '') return '-';
-  if (typeof value === 'number') return Number.isInteger(value) ? value.toLocaleString() : value.toFixed(3);
+  if (typeof value === 'number') {
+    if (key.toLowerCase().includes('pct') || key.toLowerCase().includes('percent')) return `${value.toFixed(1)}%`;
+    if (key.toLowerCase().includes('score') || key.toLowerCase().includes('ska')) return value.toFixed(2);
+    if (key.toLowerCase().includes('kepadatan')) return `${Math.round(value).toLocaleString('id-ID')} jiwa/km²`;
+    return Number.isInteger(value) ? value.toLocaleString('id-ID') : value.toFixed(2);
+  }
   if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak';
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
@@ -37,10 +42,12 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
         </div>
         <button
           onClick={onClose}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors"
           aria-label="Tutup detail"
         >
-          x
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
@@ -52,12 +59,26 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
         )}
 
         <div className="divide-y divide-slate-100">
-          {entries.map(([key, value]) => (
-            <div key={key} className="grid grid-cols-[42%_1fr] gap-3 py-2 text-sm">
-              <span className="break-words text-slate-500">{key}</span>
-              <span className="break-words text-right font-medium text-slate-800">{formatValue(value)}</span>
-            </div>
-          ))}
+          {entries.map(([key, value]) => {
+            const formatted = formatValue(key, value);
+            const isLong = key.toLowerCase().includes('alamat') || String(value || '').length > 25;
+            if (isLong) {
+              return (
+                <div key={key} className="py-2 text-xs flex flex-col gap-1">
+                  <span className="text-[11px] font-semibold text-slate-500 tracking-wide">{key}</span>
+                  <div className="font-medium text-slate-900 leading-relaxed break-words bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    {formatted}
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={key} className="grid grid-cols-[42%_1fr] gap-3 py-2 text-sm">
+                <span className="break-words text-slate-500">{key}</span>
+                <span className="break-words text-right font-medium text-slate-800">{formatted}</span>
+              </div>
+            );
+          })}
         </div>
 
         {feature.layerKey === 'halte_existing' && onAssessCondition && (

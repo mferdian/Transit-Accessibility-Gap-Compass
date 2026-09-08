@@ -39,9 +39,16 @@ ATURAN PENILAIAN:
 - Jangan menilai kualitas foto; nilai hanya objek fisik di foto.
 - Uji wajib untuk papan informasi: tanyakan "informasi rute apa yang dapat dibaca?" Jika jawabannya hanya STOP/BUS STOP/HALTE atau piktogram bus, maka has_bus_stop_marker=true, has_information_board=false, board_legible=false, route_information_evidence=null.
 
-BOUNDING BOXES:
-- Berikan hanya untuk objek yang jelas terlihat, gunakan label Bahasa Indonesia yang deskriptif (mis. "Shelter Pelindung", "Bangku Tunggu", "Ramp Dibatasi", "Guiding Block").
-- Format [x1, y1, x2, y2] relatif terhadap lebar dan tinggi gambar penuh, dinormalisasi 0.0-1.0, dengan x1 < x2 dan y1 < y2, sudut kiri-atas sebagai titik nol.
+KONTUR / POLIGON BOUNDING BOX (PENTING: IKUTI BENTUK PERSPEKTIF BENDA):
+- Jangan hanya memberi kotak tegak lurus (AABB) biasa jika bendanya bersudut atau memiliki bidang miring perspektif. Berikan poligon yang MENGIKUTI BENTUK FISIK ASLI BENDA TERSEBUT (perspective polygon contour):
+  * Atap kanopi halte: ikuti garis kemiringan atau lengkungan atap (4 sampai 8 titik).
+  * Bangku tunggu: ikuti bidang tempat duduk dan sandaran sesuai sudut pandang kamera (4 sampai 6 titik).
+  * Ramp akses: ikuti bidang miring lintasan akses dari trotoar ke lantai halte (4 sampai 6 titik).
+  * Guiding block: ikuti alur garis ubin bertekstur memanjang sesuai perspektif lantai (4 sampai 8 titik).
+  * Papan informasi / penanda halte: ikuti bidang panel informasi (4 titik).
+- Format setiap objek berupa array titik poligon keliling berurutan: [[x1, y1], [x2, y2], [x3, y3], [x4, y4], ...] (minimal 4 titik).
+- Semua nilai x dan y dinormalisasi antara 0.0 sampai 1.0 relatif terhadap dimensi penuh foto (sudut kiri-atas = 0.0, 0.0; sudut kanan-bawah = 1.0, 1.0).
+- Gunakan label Bahasa Indonesia yang deskriptif (mis. "Shelter Pelindung", "Bangku Tunggu", "Ramp Akses", "Guiding Block", "Papan Informasi").
 
 OUTPUT: Balas HANYA JSON valid (tanpa penjelasan tambahan, tanpa markdown):
 {
@@ -105,20 +112,55 @@ def extract_openai_content(response: httpx.Response) -> str:
 
 
 def normalize_bounding_boxes(raw: Any) -> Optional[Dict[str, List[float]]]:
-    """Keep only valid boxes: 4 floats in 0-1 range with x1 < x2, y1 < y2."""
+    """
+    Validates and normalizes bounding polygon/box coordinates.
+    Accepts:
+      - nested polygon points: [[x1, y1], [x2, y2], [x3, y3], ...]
+      - flat coordinates: [x1, y1, x2, y2, ...]
+      - standard 4-coordinate box: [x1, y1, x2, y2]
+    Returns a dictionary mapping label to a flat list of floats [x1, y1, x2, y2, ...].
+    All coordinates are clamped between 0.0 and 1.0.
+    """
     if not isinstance(raw, dict):
         return None
+
     boxes: Dict[str, List[float]] = {}
     for label, coords in raw.items():
-        if not isinstance(coords, (list, tuple)) or len(coords) != 4:
+        if not isinstance(coords, (list, tuple)):
             continue
-        try:
-            x1, y1, x2, y2 = (float(v) for v in coords)
-        except (TypeError, ValueError):
-            continue
-        if min(x1, y1, x2, y2) < 0 or max(x1, y1, x2, y2) > 1 or x1 >= x2 or y1 >= y2:
-            continue
-        boxes[str(label)] = [x1, y1, x2, y2]
+
+        flat_pts: list[float] = []
+        # Check if nested [[x, y], ...]
+        if len(coords) > 0 and isinstance(coords[0], (list, tuple)):
+            for pt in coords:
+                if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                    try:
+                        x = float(pt[0])
+                        y = float(pt[1])
+                        flat_pts.extend([x, y])
+                    except (TypeError, ValueError):
+                        continue
+        else:
+            # Flat list
+            try:
+                flat_pts = [float(v) for v in coords]
+            except (TypeError, ValueError):
+                continue
+
+        # If standard 4-element box [x1, y1, x2, y2]
+        if len(flat_pts) == 4:
+            x1, y1, x2, y2 = flat_pts
+            x1 = max(0.0, min(x1, 1.0))
+            y1 = max(0.0, min(y1, 1.0))
+            x2 = max(0.0, min(x2, 1.0))
+            y2 = max(0.0, min(y2, 1.0))
+            if x1 < x2 and y1 < y2:
+                boxes[str(label).strip()] = [round(x1, 4), round(y1, 4), round(x2, 4), round(y2, 4)]
+        elif len(flat_pts) >= 6 and len(flat_pts) % 2 == 0:
+            # Polygon vertices with at least 3 points
+            clamped = [round(max(0.0, min(val, 1.0)), 4) for val in flat_pts]
+            boxes[str(label).strip()] = clamped
+
     return boxes or None
 
 
@@ -180,9 +222,9 @@ class MockVisionProvider(BaseVisionProvider):
             "guiding_block_broken": False,
             "confidence_score": 0.87,
             "bounding_boxes": {
-                "Shelter Pelindung": [0.02, 0.05, 0.93, 0.42],
-                "Bangku Tunggu": [0.18, 0.55, 0.78, 0.82],
-                "Papan Informasi": [0.83, 0.30, 0.99, 0.55],
+                "Shelter Pelindung": [0.03, 0.08, 0.94, 0.04, 0.91, 0.40, 0.06, 0.44],
+                "Bangku Tunggu": [0.20, 0.54, 0.76, 0.52, 0.79, 0.78, 0.17, 0.82],
+                "Papan Informasi": [0.82, 0.28, 0.98, 0.29, 0.97, 0.58, 0.81, 0.57],
             },
         }
 

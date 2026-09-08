@@ -5,6 +5,7 @@ from shapely.geometry import Point
 
 from app.services.local_geojson import load_demografi_gdf
 from app.services.mapid import fetch_mapid_layer, safe_float
+from app.services.carbon import calculate_carbon_footprint
 
 
 PROJECTED_CRS = "EPSG:3857"
@@ -85,6 +86,8 @@ def simulate_intervention(lat: float, lon: float, service_radius: int = 400) -> 
         or float(nearest.geometry.area)
     )
 
+    carbon_detail = calculate_carbon_footprint(int(total_population), service_radius)
+
     return {
         "lat": lat,
         "lon": lon,
@@ -100,6 +103,7 @@ def simulate_intervention(lat: float, lon: float, service_radius: int = 400) -> 
         "estimasi_penurunan_gap_score": round(total_reduction / max(len(affected), 1), 3),
         "estimasi_penduduk_baru": int(total_population),
         "perubahan_ska": perubahan_ska,
+        "carbon_footprint": carbon_detail.model_dump(),
     }
 
 

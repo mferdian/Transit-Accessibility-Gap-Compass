@@ -51,7 +51,7 @@ def calculate_ska(gdf: gpd.GeoDataFrame, params: SKAParameters = SKAParameters()
     
     # 3. Normalize the final score to 0-1
     final_ska = normalize_series(composite)
-    result_gdf['ska_score'] = final_ska
+    result_gdf['ska_score'] = final_ska.round(3)
     
     # 4. Categorize SKA
     def categorize(score: float) -> str:

@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import MapView from '@/components/MapView';
-import FilterPanel from '@/components/FilterPanel';
-import RecommendationPanel from '@/components/RecommendationPanel';
-import LayerTogglePanel from '@/components/LayerTogglePanel';
-import FeatureDetailPanel from '@/components/FeatureDetailPanel';
-import SimulationPanel from '@/components/SimulationPanel';
+import LeftControlPanel, { LeftPanelTab } from '@/components/LeftControlPanel';
+import RightInspectorPanel from '@/components/RightInspectorPanel';
+import MapLegend from '@/components/MapLegend';
 import HalteConditionPanel from '@/components/HalteConditionPanel';
 import {
   SKAParameters,
@@ -46,11 +44,15 @@ export default function ClientDashboard() {
   const [simulationMode, setSimulationMode] = useState<boolean>(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
   const [isSimulationLoading, setIsSimulationLoading] = useState<boolean>(false);
+  const [activeLeftTab, setActiveLeftTab] = useState<LeftPanelTab>('filter');
+  const [mapCenterTarget, setMapCenterTarget] = useState<{ lat: number; lon: number; zoom?: number } | null>(null);
 
   // Recommendations state
   const [showRecommendations, setShowRecommendations] = useState<boolean>(false);
   const [recommendations, setRecommendations] = useState<RecommendationPoint[]>([]);
+  const [activeRecommendation, setActiveRecommendation] = useState<RecommendationPoint | null>(null);
   const [isRecLoading, setIsRecLoading] = useState<boolean>(false);
+  const [activeRightTab, setActiveRightTab] = useState<'detail' | 'recommendations'>('detail');
 
   const loadData = async (currentWeights: SKAParameters) => {
     setIsLoading(true);
@@ -113,6 +115,7 @@ export default function ClientDashboard() {
   const handleToggleRecommendations = () => {
     if (!showRecommendations) {
       loadRecommendations(weights);
+      setActiveRightTab('recommendations');
     }
     setShowRecommendations(!showRecommendations);
   };
@@ -126,7 +129,16 @@ export default function ClientDashboard() {
     }
   };
 
+  const handleToggleSimulationMode = () => {
+    const nextMode = !simulationMode;
+    setSimulationMode(nextMode);
+    if (nextMode) {
+      setActiveLeftTab('simulation');
+    }
+  };
+
   const handleSimulationClick = async (lat: number, lon: number) => {
+    setActiveLeftTab('simulation');
     setIsSimulationLoading(true);
     setError(null);
     try {
@@ -142,47 +154,68 @@ export default function ClientDashboard() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
-      <FilterPanel 
-        weights={weights} 
-        onWeightsChange={setWeights} 
+      <LeftControlPanel
+        weights={weights}
+        onWeightsChange={setWeights}
         onApply={handleApplyFilter}
         onToggleRecommendations={handleToggleRecommendations}
         isLoading={isLoading}
-      />
-
-      <LayerTogglePanel
         showSkaArea={showSkaArea}
         onToggleSkaArea={() => setShowSkaArea((current) => !current)}
         visibleLayers={visibleLayers}
         onToggleLayer={handleToggleMapidLayer}
         loadingLayers={loadingLayers}
-      />
-
-      <SimulationPanel
-        result={simulationResult}
-        isLoading={isSimulationLoading}
-        isActive={simulationMode}
-        onToggleMode={() => setSimulationMode((current) => !current)}
-        onCloseResult={() => setSimulationResult(null)}
+        simulationMode={simulationMode}
+        onToggleSimulationMode={handleToggleSimulationMode}
+        simulationResult={simulationResult}
+        isSimulationLoading={isSimulationLoading}
+        onCloseSimulationResult={() => setSimulationResult(null)}
+        activeTab={activeLeftTab}
+        onTabChange={setActiveLeftTab}
+        onOpenHalteAudit={() => setHalteConditionTarget({ id: 'sample-01', name: 'Halte Pemuda Surabaya' })}
       />
       
-      {showRecommendations && (
-        <RecommendationPanel 
+      {/* Right Column Stack: Inspector Panel and Map Legend in a coordinated flex column that never overlaps */}
+      <div className="absolute right-6 top-6 bottom-6 z-[25] flex flex-col items-end pointer-events-none gap-3">
+        <RightInspectorPanel
+          selectedFeature={selectedFeature}
+          onCloseFeature={() => setSelectedFeature(null)}
+          onAssessCondition={(id, name) => setHalteConditionTarget({ id, name })}
           recommendations={recommendations}
-          isLoading={isRecLoading}
-          onClose={() => setShowRecommendations(false)}
-          onItemClick={(lat, lon) => {
-             // In a real app we would flyTo this location on the map
-             console.log(`Zoom to: ${lat}, ${lon}`);
+          isRecLoading={isRecLoading}
+          showRecommendations={showRecommendations}
+          onCloseRecommendations={() => {
+            setShowRecommendations(false);
+            setActiveRecommendation(null);
           }}
+          onRecommendationClick={(lat, lon, rec) => {
+            if (
+              activeRecommendation &&
+              (activeRecommendation.rank === rec?.rank ||
+                (rec &&
+                  Math.abs(activeRecommendation.lat - rec.lat) < 0.0001 &&
+                  Math.abs(activeRecommendation.lon - rec.lon) < 0.0001))
+            ) {
+              setActiveRecommendation(null);
+            } else {
+              setMapCenterTarget({ lat, lon, zoom: 16 });
+              setActiveRecommendation(rec || null);
+            }
+          }}
+          activeRecommendation={activeRecommendation}
+          onClearActiveRecommendation={() => setActiveRecommendation(null)}
+          activeTab={activeRightTab}
+          onTabChange={setActiveRightTab}
         />
-      )}
 
-      <FeatureDetailPanel
-        feature={selectedFeature}
-        onClose={() => setSelectedFeature(null)}
-        onAssessCondition={(id, name) => setHalteConditionTarget({ id, name })}
-      />
+        <div className="mt-auto pointer-events-auto">
+          <MapLegend
+            visibleLayers={visibleLayers}
+            showSkaArea={showSkaArea}
+            showRecommendations={showRecommendations}
+          />
+        </div>
+      </div>
 
       {halteConditionTarget && (
         <HalteConditionPanel
@@ -208,7 +241,13 @@ export default function ClientDashboard() {
           demographicData={visibleLayers.demografi ? mapidLayers.demografi || null : null}
           halteExistingData={visibleLayers.halte_existing ? mapidLayers.halte_existing || null : null}
           recommendationData={showRecommendations ? recommendations : undefined}
-          onFeatureSelect={setSelectedFeature}
+          centerTarget={mapCenterTarget}
+          activeRecommendation={activeRecommendation}
+          onClearActiveRecommendation={() => setActiveRecommendation(null)}
+          onFeatureSelect={(feature) => {
+            setSelectedFeature(feature);
+            if (feature) setActiveRightTab('detail');
+          }}
           onSimulationClick={handleSimulationClick}
           simulationMode={simulationMode}
           simulationPoint={simulationResult ? { lat: simulationResult.lat, lon: simulationResult.lon } : null}

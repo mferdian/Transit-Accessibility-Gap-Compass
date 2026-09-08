@@ -2,6 +2,7 @@ import geopandas as gpd
 from typing import List
 import pandas as pd
 from app.models.schemas import HalteRecommendationPoint
+from app.services.carbon import calculate_carbon_footprint
 
 def get_recommendations(gdf_with_ska: gpd.GeoDataFrame, threshold_ska: float = 0.5, service_radius_m: int = 400) -> List[HalteRecommendationPoint]:
     """
@@ -63,6 +64,7 @@ def get_recommendations(gdf_with_ska: gpd.GeoDataFrame, threshold_ska: float = 0
     
     final_recs = []
     for rank, rec in enumerate(recommendations, start=1):
+        carbon = calculate_carbon_footprint(rec['estimasi_penduduk_terlayani'], rec['radius_layanan'])
         final_recs.append(
             HalteRecommendationPoint(
                 lat=rec['lat'],
@@ -71,7 +73,8 @@ def get_recommendations(gdf_with_ska: gpd.GeoDataFrame, threshold_ska: float = 0
                 estimasi_penduduk_terlayani=rec['estimasi_penduduk_terlayani'],
                 estimasi_perubahan_ska=rec['estimasi_perubahan_ska'],
                 radius_layanan=rec['radius_layanan'],
-                jenis_rekomendasi=rec['jenis_rekomendasi']
+                jenis_rekomendasi=rec['jenis_rekomendasi'],
+                carbon_footprint=carbon,
             )
         )
         

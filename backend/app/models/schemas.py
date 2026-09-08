@@ -33,6 +33,14 @@ class SKAParameters(BaseModel):
     weight_frekuensi: float = 0.15
 
 
+# --- Environmental & Carbon Footprint Models ---
+class CarbonFootprintDetail(BaseModel):
+    co2_reduction_tons_year: float = Field(..., description="Estimasi pengurangan emisi CO2e dalam ton per tahun")
+    tree_equivalent: int = Field(..., description="Ekuivalensi serapan pohon dewasa per tahun")
+    daily_vehicle_trips_reduced: int = Field(..., description="Estimasi perjalanan kendaraan pribadi yang teralihkan per hari")
+    annual_fuel_liters_saved: int = Field(..., description="Estimasi penghematan bahan bakar (BBM) per tahun")
+
+
 # --- Recommendation Models ---
 class RecommendationRequest(BaseModel):
     threshold_ska: float = 0.6
@@ -47,12 +55,14 @@ class HalteRecommendationPoint(BaseModel):
     estimasi_perubahan_ska: float
     radius_layanan: int
     jenis_rekomendasi: str
+    carbon_footprint: Optional[CarbonFootprintDetail] = None
 
 
 class RecommendationResponse(BaseModel):
     status: str
     recommendations: List[HalteRecommendationPoint]
     geojson_layer: GeoJSONFeatureCollection
+    total_carbon_reduction_tons_year: Optional[float] = None
 
 
 # --- Vision Models ---
@@ -136,3 +146,4 @@ class SimulateResponse(BaseModel):
     estimasi_penurunan_gap_score: float
     estimasi_penduduk_baru: int
     perubahan_ska: Dict[str, float]
+    carbon_footprint: Optional[CarbonFootprintDetail] = None
