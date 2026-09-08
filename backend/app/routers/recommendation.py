@@ -39,9 +39,19 @@ def get_halte_recommendations(
     # 4. Generate the response
     # We also return the GeoJSON layer so the frontend has the full map context if needed
     geojson_layer = gdf_to_geojson_collection(result_gdf)
+
+    total_carbon = round(
+        sum(
+            r.carbon_footprint.co2_reduction_tons_year
+            for r in recommendations
+            if r.carbon_footprint
+        ),
+        1
+    )
     
     return RecommendationResponse(
         status="success",
         recommendations=recommendations,
-        geojson_layer=geojson_layer
+        geojson_layer=geojson_layer,
+        total_carbon_reduction_tons_year=total_carbon
     )

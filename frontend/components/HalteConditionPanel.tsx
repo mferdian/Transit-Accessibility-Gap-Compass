@@ -60,61 +60,280 @@ function ScoreRing({ score, status }: { score: number; status: string }) {
 
 function getBoxMeta(label: string) {
   const key = label.toLowerCase();
-  if (key.includes('rusak') || key.includes('terhalang') || key.includes('dibatasi')) {
-    return { box: 'border-red-500', badge: 'bg-red-600 text-white', dot: 'bg-red-500', category: 'Perlu perhatian' };
+  if (key.includes('rusak') || key.includes('terhalang') || key.includes('dibatasi') || key.includes('patah') || key.includes('curam')) {
+    return {
+      stroke: '#ef4444',
+      fill: 'rgba(239, 68, 68, 0.16)',
+      fillHover: 'rgba(239, 68, 68, 0.38)',
+      badge: 'bg-red-600 text-white',
+      dot: 'bg-red-500',
+      category: 'Perlu perhatian',
+      dashed: false,
+    };
   }
-  if (key.includes('penanda') || key.includes('bus stop')) {
-    return { box: 'border-blue-500', badge: 'bg-blue-600 text-white', dot: 'bg-blue-500', category: 'Penanda lokasi (tidak dinilai)' };
+  if (key.includes('penanda') || key.includes('bus stop') || key.includes('stop marker')) {
+    return {
+      stroke: '#3b82f6',
+      fill: 'rgba(59, 130, 246, 0.16)',
+      fillHover: 'rgba(59, 130, 246, 0.38)',
+      badge: 'bg-blue-600 text-white',
+      dot: 'bg-blue-500',
+      category: 'Penanda lokasi (tidak dinilai)',
+      dashed: false,
+    };
   }
-  if (key.includes('guiding') || key.includes('ramp')) {
-    return { box: 'border-purple-500', badge: 'bg-purple-600 text-white', dot: 'bg-purple-500', category: 'Fasilitas aksesibilitas' };
+  if (key.includes('guiding') || key.includes('ramp') || key.includes('ubin') || key.includes('tuna netra') || key.includes('akses')) {
+    return {
+      stroke: '#a855f7',
+      fill: 'rgba(168, 85, 247, 0.18)',
+      fillHover: 'rgba(168, 85, 247, 0.40)',
+      badge: 'bg-purple-600 text-white',
+      dot: 'bg-purple-500',
+      category: 'Fasilitas aksesibilitas',
+      dashed: false,
+    };
   }
-  return { box: 'border-emerald-500', badge: 'bg-emerald-600 text-white', dot: 'bg-emerald-500', category: 'Fasilitas terdeteksi' };
+  return {
+    stroke: '#10b981',
+    fill: 'rgba(16, 185, 129, 0.16)',
+    fillHover: 'rgba(16, 185, 129, 0.38)',
+    badge: 'bg-emerald-600 text-white',
+    dot: 'bg-emerald-500',
+    category: 'Fasilitas terdeteksi',
+    dashed: false,
+  };
 }
 
-function BoxOverlay({ boxes }: { boxes: Record<string, number[]> }) {
+interface ParsedPolygon {
+  label: string;
+  index: number;
+  points: [number, number][];
+  svgPoints: string;
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  anchorX: number;
+  anchorY: number;
+  placement: 'top' | 'bottom';
+  yOffsetPx: number;
+}
+
+function parsePolygons(boxes: Record<string, number[]>): ParsedPolygon[] {
+  const entries = Object.entries(boxes);
+  const items: ParsedPolygon[] = entries.map(([label, coords], index) => {
+    let pts: [number, number][] = [];
+    if (coords.length === 4) {
+      const [x1, y1, x2, y2] = coords;
+      pts = [
+        [x1, y1],
+        [x2, y1],
+        [x2, y2],
+        [x1, y2],
+      ];
+    } else if (coords.length >= 6) {
+      for (let i = 0; i < coords.length - 1; i += 2) {
+        pts.push([coords[i], coords[i + 1]]);
+      }
+    }
+
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    const svgPoints = pts
+      .map(([x, y]) => `${(x * 100).toFixed(2)},${(y * 100).toFixed(2)}`)
+      .join(' ');
+
+    const preferBottom = minY < 0.10;
+
+    return {
+      label,
+      index: index + 1,
+      points: pts,
+      svgPoints,
+      minX,
+      maxX,
+      minY,
+      maxY,
+      anchorX: Math.max(0.08, Math.min(0.92, (minX + maxX) / 2)),
+      anchorY: preferBottom ? maxY : minY,
+      placement: preferBottom ? 'bottom' : 'top',
+      yOffsetPx: 0,
+    };
+  });
+
+  // Anti-collision staggering: detect when labels are close and alternate placement / offsets
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      const a = items[i];
+      const b = items[j];
+      const xDiff = Math.abs(a.anchorX - b.anchorX);
+      const yDiff = Math.abs(a.anchorY - b.anchorY);
+
+      if (xDiff < 0.22 && yDiff < 0.08) {
+        if (a.placement === 'top' && b.minY > 0.10) {
+          b.placement = 'bottom';
+          b.anchorY = b.maxY;
+        } else if (a.placement === 'bottom' && b.maxY < 0.90) {
+          b.placement = 'top';
+          b.anchorY = b.minY;
+        } else {
+          b.yOffsetPx += 26;
+        }
+      }
+    }
+  }
+
+  return items;
+}
+
+function BoxOverlay({
+  boxes,
+  hoveredLabel,
+  onHoverLabel,
+}: {
+  boxes: Record<string, number[]>;
+  hoveredLabel?: string | null;
+  onHoverLabel?: (label: string | null) => void;
+}) {
+  const polygons = parsePolygons(boxes);
+
   return (
-    <>
-      {Object.entries(boxes).map(([label, coords], index) => {
-        const [x1, y1, x2, y2] = coords;
-        const meta = getBoxMeta(label);
+    <div className="absolute inset-0 pointer-events-none">
+      {/* SVG Polygons tracing true object contours */}
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 h-full w-full pointer-events-none"
+      >
+        {polygons.map((item) => {
+          const meta = getBoxMeta(item.label);
+          const isHovered = hoveredLabel === item.label;
+          const isOtherHovered = hoveredLabel !== null && !isHovered;
+
+          return (
+            <polygon
+              key={item.label}
+              points={item.svgPoints}
+              className="pointer-events-auto cursor-pointer transition-all duration-200"
+              fill={isHovered ? meta.fillHover : meta.fill}
+              stroke={meta.stroke}
+              strokeWidth={isHovered ? '2.4' : '1.4'}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              opacity={isOtherHovered ? 0.35 : 1.0}
+              vectorEffect="non-scaling-stroke"
+              style={{
+                filter: isHovered
+                  ? 'drop-shadow(0 0 5px rgba(255,255,255,0.95))'
+                  : 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))',
+              }}
+              onMouseEnter={() => onHoverLabel?.(item.label)}
+              onMouseLeave={() => onHoverLabel?.(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onHoverLabel?.(hoveredLabel === item.label ? null : item.label);
+              }}
+            />
+          );
+        })}
+      </svg>
+
+      {/* Collision-free, high-contrast labels */}
+      {polygons.map((item) => {
+        const meta = getBoxMeta(item.label);
+        const isHovered = hoveredLabel === item.label;
+        const isOtherHovered = hoveredLabel !== null && !isHovered;
+
+        const topPct = item.placement === 'bottom'
+          ? Math.min(94, item.maxY * 100 + 1)
+          : Math.max(3, item.minY * 100 - 1);
+
         return (
           <div
-            key={label}
-            className={`absolute border-2 ${meta.box} bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.75)]`}
+            key={item.label}
+            className={`absolute pointer-events-auto transition-all duration-200 cursor-pointer ${
+              isHovered ? 'z-50 scale-105' : isOtherHovered ? 'z-10 opacity-35' : 'z-20 opacity-100'
+            }`}
             style={{
-              left: `${x1 * 100}%`,
-              top: `${y1 * 100}%`,
-              width: `${(x2 - x1) * 100}%`,
-              height: `${(y2 - y1) * 100}%`,
+              left: `${Math.max(10, Math.min(90, item.anchorX * 100))}%`,
+              top: `${topPct}%`,
+              transform: `translate(-50%, ${item.placement === 'bottom' ? '2px' : '-100%'}) translateY(${item.yOffsetPx}px)`,
+            }}
+            onMouseEnter={() => onHoverLabel?.(item.label)}
+            onMouseLeave={() => onHoverLabel?.(null)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onHoverLabel?.(hoveredLabel === item.label ? null : item.label);
             }}
           >
-            <span
-              title={meta.category}
-              className={`absolute -left-0.5 flex h-6 max-w-[16rem] items-center truncate whitespace-nowrap rounded px-1.5 text-[10px] font-bold shadow ${meta.badge} ${
-                y1 < 0.08 ? 'top-0' : '-top-6'
+            <div
+              className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-lg backdrop-blur-md border transition-all ${
+                isHovered
+                  ? 'bg-slate-950 text-white border-white ring-2 ring-white/50 shadow-2xl'
+                  : 'bg-slate-950/85 text-slate-100 border-white/25 hover:border-white/60'
               }`}
             >
-              {index + 1}. {label.replace(/ \(foto \d+\)$/i, '')}
-            </span>
+              <span
+                className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px] font-black text-white"
+                style={{ backgroundColor: meta.stroke }}
+              >
+                {item.index}
+              </span>
+              <span className="whitespace-nowrap font-semibold tracking-tight">
+                {item.label.replace(/ \(foto \d+\)$/i, '')}
+              </span>
+            </div>
           </div>
         );
       })}
-    </>
+    </div>
   );
 }
 
-function BoxLegend({ boxes }: { boxes?: Record<string, number[]> | null }) {
+function BoxLegend({
+  boxes,
+  hoveredLabel,
+  onHoverLabel,
+}: {
+  boxes?: Record<string, number[]> | null;
+  hoveredLabel?: string | null;
+  onHoverLabel?: (label: string | null) => void;
+}) {
   if (!boxes || Object.keys(boxes).length === 0) return null;
   return (
     <div className="grid gap-1.5">
       {Object.keys(boxes).map((label, index) => {
         const meta = getBoxMeta(label);
+        const isHovered = hoveredLabel === label;
         return (
-          <div key={label} className="flex items-start gap-2 text-xs">
-            <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${meta.dot}`} />
-            <span className="font-semibold text-slate-800">{index + 1}. {label.replace(/ \(foto \d+\)$/i, '')}</span>
-            <span className="ml-auto text-right text-[10px] text-slate-500">{meta.category}</span>
+          <div
+            key={label}
+            className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all cursor-pointer ${
+              isHovered
+                ? 'bg-slate-200/90 ring-1 ring-slate-400 font-medium'
+                : 'hover:bg-slate-100'
+            }`}
+            onMouseEnter={() => onHoverLabel?.(label)}
+            onMouseLeave={() => onHoverLabel?.(null)}
+            onClick={() => onHoverLabel?.(isHovered ? null : label)}
+          >
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-sm"
+              style={{ backgroundColor: meta.stroke }}
+            >
+              {index + 1}
+            </span>
+            <span className="font-semibold text-slate-800 truncate">
+              {label.replace(/ \(foto \d+\)$/i, '')}
+            </span>
+            <span className="ml-auto text-right text-[10px] text-slate-500 shrink-0">
+              {meta.category}
+            </span>
           </div>
         );
       })}
@@ -128,12 +347,16 @@ function AnnotatedImage({
   boxes,
   fullScreen = false,
   onError,
+  hoveredLabel,
+  onHoverLabel,
 }: {
   src: string;
   alt: string;
   boxes?: Record<string, number[]> | null;
   fullScreen?: boolean;
   onError?: () => void;
+  hoveredLabel?: string | null;
+  onHoverLabel?: (label: string | null) => void;
 }) {
   return (
     <div className="relative inline-block max-h-full max-w-full leading-none">
@@ -146,7 +369,13 @@ function AnnotatedImage({
           : 'block h-auto max-h-56 w-auto max-w-full object-contain'}
         onError={onError}
       />
-      {boxes && <BoxOverlay boxes={boxes} />}
+      {boxes && (
+        <BoxOverlay
+          boxes={boxes}
+          hoveredLabel={hoveredLabel}
+          onHoverLabel={onHoverLabel}
+        />
+      )}
     </div>
   );
 }
@@ -170,6 +399,7 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
   const [expanded, setExpanded] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -271,16 +501,32 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
       : assessment?.status;
   const confidencePct = assessment ? Math.round(assessment.features.confidence_score * 100) : null;
 
+  const loadSamplePhoto = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setError(null);
+    setImageError(false);
+    try {
+      const response = await fetch('/test_halte.jpg');
+      const blob = await response.blob();
+      const file = new File([blob], 'contoh_halte_surabaya.jpg', { type: 'image/jpeg' });
+      await handleFiles([file]);
+    } catch (err: any) {
+      setError('Gagal memuat contoh foto survei: ' + (err.message || ''));
+    }
+  };
+
   return (
-    <div className="absolute left-1/2 top-6 z-[30] flex max-h-[88vh] w-[24rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+    <div className="absolute left-1/2 top-6 z-[30] flex max-h-[88vh] w-[25rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <h2 className="text-base font-bold text-slate-800">Kondisi Halte</h2>
+        <h2 className="text-sm font-bold text-slate-800">Audit Kondisi Fisik Halte</h2>
         <button
           onClick={onClose}
-          className="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+          className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
           aria-label="Tutup panel kondisi halte"
         >
-          x
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
@@ -337,6 +583,8 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
                   alt={`Foto ${activePhoto + 1} - ${halteName}`}
                   boxes={activeBoxes}
                   onError={() => setImageError(true)}
+                  hoveredLabel={hoveredLabel}
+                  onHoverLabel={setHoveredLabel}
                 />
               </div>
               {assessment && (
@@ -370,6 +618,18 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
                   <span className="mt-2 block text-[10px] text-slate-400">
                     Ambil sudut depan, samping, lantai akses, dan papan informasi
                   </span>
+                  <button
+                    type="button"
+                    onClick={loadSamplePhoto}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors shadow-sm"
+                  >
+                    <svg className="w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span>Gunakan Contoh Foto Halte</span>
+                  </button>
                 </span>
               )}
             </div>
@@ -430,7 +690,11 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
                 Buka anotasi penuh
               </button>
             </div>
-            <BoxLegend boxes={activeBoxes} />
+            <BoxLegend
+              boxes={activeBoxes}
+              hoveredLabel={hoveredLabel}
+              onHoverLabel={setHoveredLabel}
+            />
           </div>
         )}
 
@@ -561,6 +825,8 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
               alt={`Foto penuh ${activePhoto + 1} - ${halteName}`}
               boxes={activeBoxes}
               fullScreen
+              hoveredLabel={hoveredLabel}
+              onHoverLabel={setHoveredLabel}
             />
 
             {photoPreviews.length > 1 && (
@@ -587,7 +853,11 @@ export default function HalteConditionPanel({ halteId, halteName, onClose }: Hal
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">Deteksi Foto {activePhoto + 1}</p>
             {activeBoxes ? (
               <div className="space-y-2 rounded-xl bg-white p-3 text-slate-900">
-                <BoxLegend boxes={activeBoxes} />
+                <BoxLegend
+                  boxes={activeBoxes}
+                  hoveredLabel={hoveredLabel}
+                  onHoverLabel={setHoveredLabel}
+                />
               </div>
             ) : (
               <p className="rounded-lg bg-white/5 p-3 text-xs text-slate-400">Tidak ada bounding box pada foto ini.</p>

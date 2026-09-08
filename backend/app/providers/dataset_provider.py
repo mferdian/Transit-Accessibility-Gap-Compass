@@ -86,24 +86,24 @@ class GeoMapidDatasetProvider(BaseDatasetProvider):
         if 'DESA' in gdf.columns:
             gdf['nama'] = gdf['DESA']
         if 'KEPADATAN PENDUDUK 2024' in gdf.columns:
-            gdf['kepadatan'] = gdf['KEPADATAN PENDUDUK 2024']
+            gdf['kepadatan'] = gdf['KEPADATAN PENDUDUK 2024'].round(1)
             
         # Add mock or estimated values for SKA calculation if they don't exist
         if 'blind_spot_pct' not in gdf.columns:
             import numpy as np
             # Random estimation for simulation if not in layer
             np.random.seed(42)  # Fixed seed for consistent results
-            gdf['blind_spot_pct'] = np.random.uniform(10, 40, size=len(gdf))
+            gdf['blind_spot_pct'] = np.random.uniform(10, 40, size=len(gdf)).round(1)
             
         if 'jarak_first_mile' not in gdf.columns:
             import numpy as np
             np.random.seed(43)
-            gdf['jarak_first_mile'] = np.random.uniform(300, 1500, size=len(gdf))
+            gdf['jarak_first_mile'] = np.random.uniform(300, 1500, size=len(gdf)).round(1)
             
         if 'frekuensi' not in gdf.columns:
             import numpy as np
             np.random.seed(44)
-            gdf['frekuensi'] = np.random.uniform(2, 10, size=len(gdf))
+            gdf['frekuensi'] = np.random.uniform(2, 10, size=len(gdf)).round(1)
             
         # Ensure CRS is set to EPSG:4326
         gdf.set_crs(epsg=4326, inplace=True, allow_override=True)

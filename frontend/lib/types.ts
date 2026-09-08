@@ -30,6 +30,13 @@ export interface SKAParameters {
   w4: number;
 }
 
+export interface CarbonFootprintDetail {
+  co2_reduction_tons_year: number;
+  tree_equivalent: number;
+  daily_vehicle_trips_reduced: number;
+  annual_fuel_liters_saved: number;
+}
+
 export interface RecommendationPoint {
   lat: number;
   lon: number;
@@ -39,12 +46,14 @@ export interface RecommendationPoint {
   radius_layanan: number;
   jenis_rekomendasi: string;
   nama?: string;
+  carbon_footprint?: CarbonFootprintDetail;
 }
 
 export interface RecommendationResponse {
   status: string;
   recommendations: RecommendationPoint[];
   geojson_layer: GeoJSONFeatureCollection;
+  total_carbon_reduction_tons_year?: number;
 }
 
 export type MapidLayerKey = "area_gap" | "titik_rekomendasi" | "area_rekomendasi" | "demografi" | "halte_existing";
@@ -81,6 +90,7 @@ export interface SimulationResult {
   estimasi_penurunan_gap_score: number;
   estimasi_penduduk_baru: number;
   perubahan_ska: Record<string, number>;
+  carbon_footprint?: CarbonFootprintDetail;
 }
 
 export interface VisionFeatureDetection {
