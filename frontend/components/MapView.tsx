@@ -397,7 +397,7 @@ export default function MapView({
         </div>
       `;
       layer.bindPopup(popupContent, { maxWidth: 280, minWidth: 210 });
-      
+
       layer.on({
         click: (e: any) => {
           if (simulationModeRef.current) {
@@ -443,10 +443,10 @@ export default function MapView({
 
   return (
     <div className={`w-full h-full relative ${simulationMode ? 'cursor-crosshair' : ''}`}>
-      <MapContainer 
-        center={center} 
-        zoom={12} 
-        scrollWheelZoom={true} 
+      <MapContainer
+        center={center}
+        zoom={12}
+        scrollWheelZoom={true}
         style={{ height: '100%', width: '100%', zIndex: 10 }}
       >
         <TileLayer
@@ -460,9 +460,9 @@ export default function MapView({
           onPanesReady={() => setPanesReady(true)}
         />
         {panesReady && geoData && (
-          <GeoJSON 
+          <GeoJSON
             key={JSON.stringify(geoData.features.map(f => f.properties.ska_score))} // Force re-render on data change
-            data={geoData} 
+            data={geoData}
             pane="skaPane"
             style={styleFeature}
             onEachFeature={onEachFeature}
@@ -531,7 +531,6 @@ export default function MapView({
                 click: (e) => {
                   e.originalEvent?.stopPropagation();
                   if (simulationModeRef.current) {
-                    e.target?.closePopup?.();
                     onSimulationClickRef.current?.(point.lat, point.lon);
                     return;
                   }
@@ -578,7 +577,6 @@ export default function MapView({
               click: (e) => {
                 e.originalEvent?.stopPropagation();
                 if (simulationModeRef.current) {
-                  e.target?.closePopup?.();
                   onSimulationClickRef.current?.(point.lat, point.lon);
                   return;
                 }
@@ -635,7 +633,6 @@ export default function MapView({
                 click: (e) => {
                   e.originalEvent?.stopPropagation();
                   if (simulationModeRef.current) {
-                    e.target?.closePopup?.();
                     onSimulationClickRef.current?.(rec.lat, rec.lon);
                     return;
                   }
