@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMapEvents } from 'react-leaflet';
 
 interface MapClickHandlerProps {
@@ -11,10 +11,16 @@ interface MapClickHandlerProps {
 }
 
 export default function MapClickHandler({ enabled, onClick, centerTarget, onPanesReady }: MapClickHandlerProps) {
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+
+  const onClickRef = useRef(onClick);
+  onClickRef.current = onClick;
+
   const map = useMapEvents({
     click(event) {
-      if (!enabled) return;
-      onClick?.(event.latlng.lat, event.latlng.lng);
+      if (!enabledRef.current) return;
+      onClickRef.current?.(event.latlng.lat, event.latlng.lng);
     },
   });
 

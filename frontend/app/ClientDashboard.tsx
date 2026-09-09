@@ -129,6 +129,15 @@ export default function ClientDashboard() {
     }
   };
 
+  const handleLeftTabChange = (tab: LeftPanelTab) => {
+    setActiveLeftTab(tab);
+    if (tab === 'simulation') {
+      setSimulationMode(true);
+    } else {
+      setSimulationMode(false);
+    }
+  };
+
   const handleToggleSimulationMode = () => {
     const nextMode = !simulationMode;
     setSimulationMode(nextMode);
@@ -154,6 +163,38 @@ export default function ClientDashboard() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
+      {/* Floating Simulation Mode Indicator Banner */}
+      {simulationMode && (
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-[30] flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900/95 text-white border border-emerald-500/50 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <div className="text-xs">
+            <strong className="text-emerald-400">Mode Simulasi What-If Aktif:</strong>{' '}
+            <span className="text-slate-200">Klik titik manapun di peta untuk menganalisis dampak penambahan halte</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSimulationMode(false);
+              setActiveLeftTab('filter');
+            }}
+            className="ml-2 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-slate-200 px-2.5 py-1 rounded-md transition-colors"
+          >
+            ✕ Tutup
+          </button>
+        </div>
+      )}
+
+      {/* Floating Simulation Loading Indicator */}
+      {isSimulationLoading && (
+        <div className="absolute top-18 left-1/2 -translate-x-1/2 z-[30] flex items-center gap-2.5 px-4 py-2 rounded-lg bg-slate-950/90 text-white border border-emerald-500/60 shadow-xl backdrop-blur-md">
+          <svg className="animate-spin h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          <span className="text-xs font-medium">Menganalisis jangkauan dan dampak dekarbonisasi halte baru...</span>
+        </div>
+      )}
+
       <LeftControlPanel
         weights={weights}
         onWeightsChange={setWeights}
@@ -171,8 +212,9 @@ export default function ClientDashboard() {
         isSimulationLoading={isSimulationLoading}
         onCloseSimulationResult={() => setSimulationResult(null)}
         activeTab={activeLeftTab}
-        onTabChange={setActiveLeftTab}
+        onTabChange={handleLeftTabChange}
         onOpenHalteAudit={() => setHalteConditionTarget({ id: 'sample-01', name: 'Halte Pemuda Surabaya' })}
+        onSampleSimulation={() => handleSimulationClick(-7.2575, 112.7521)}
       />
       
       {/* Right Column Stack: Inspector Panel and Map Legend in a coordinated flex column that never overlaps */}
@@ -251,6 +293,9 @@ export default function ClientDashboard() {
           onSimulationClick={handleSimulationClick}
           simulationMode={simulationMode}
           simulationPoint={simulationResult ? { lat: simulationResult.lat, lon: simulationResult.lon } : null}
+          simulationResult={simulationResult}
+          isSimulationLoading={isSimulationLoading}
+          onClearSimulation={() => setSimulationResult(null)}
         />
       </div>
     </div>
