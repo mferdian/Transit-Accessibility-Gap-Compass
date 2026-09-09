@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { GeoJSONFeatureCollection, RecommendationPoint, SelectedFeatureDetail } from '@/lib/types';
+import { GeoJSONFeatureCollection, RecommendationPoint, SelectedFeatureDetail, SimulationResult } from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamically import MapContainer and other components from react-leaflet
@@ -11,6 +11,7 @@ const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapCo
 const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
 const GeoJSON = dynamic(() => import('react-leaflet').then(mod => mod.GeoJSON), { ssr: false });
 const CircleMarker = dynamic(() => import('react-leaflet').then(mod => mod.CircleMarker), { ssr: false });
+const Circle = dynamic(() => import('react-leaflet').then(mod => mod.Circle), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 const Tooltip = dynamic(() => import('react-leaflet').then(mod => mod.Tooltip), { ssr: false });
 const MapClickHandler = dynamic(() => import('@/components/MapClickHandler'), { ssr: false });
@@ -29,6 +30,9 @@ interface MapViewProps {
   onFeatureSelect?: (feature: SelectedFeatureDetail) => void;
   onSimulationClick?: (lat: number, lon: number) => void;
   simulationPoint?: { lat: number; lon: number } | null;
+  simulationResult?: SimulationResult | null;
+  isSimulationLoading?: boolean;
+  onClearSimulation?: () => void;
   simulationMode?: boolean;
 }
 
@@ -192,10 +196,23 @@ export default function MapView({
   onFeatureSelect,
   onSimulationClick,
   simulationPoint,
+  simulationResult,
+  isSimulationLoading = false,
+  onClearSimulation,
   simulationMode = false
 }: MapViewProps) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [panesReady, setPanesReady] = useState(false);
+
+  // Live mutable refs to completely eliminate stale closure issues in Leaflet layer event listeners
+  const simulationModeRef = useRef(simulationMode);
+  simulationModeRef.current = simulationMode;
+
+  const onSimulationClickRef = useRef(onSimulationClick);
+  onSimulationClickRef.current = onSimulationClick;
+
+  const onFeatureSelectRef = useRef(onFeatureSelect);
+  onFeatureSelectRef.current = onFeatureSelect;
 
   useEffect(() => {
     setMapLoaded(true);
@@ -265,8 +282,9 @@ export default function MapView({
       const properties = feature.properties || {};
       layer.on({
         click: (e: any) => {
-          if (simulationMode) {
-            onSimulationClick?.(e.latlng.lat, e.latlng.lng);
+          if (simulationModeRef.current) {
+            e.originalEvent?.stopPropagation();
+            onSimulationClickRef.current?.(e.latlng.lat, e.latlng.lng);
             return;
           }
           e.originalEvent?.stopPropagation();
@@ -288,7 +306,7 @@ export default function MapView({
             layerNameMap[layerKey] ||
             'Fitur Peta';
 
-          onFeatureSelect?.({
+          onFeatureSelectRef.current?.({
             layerKey: properties._layer_key || layerKey,
             layerName: properties._layer_name || layerNameMap[layerKey] || 'Fitur Peta',
             geometryType: feature.geometry?.type || 'Polygon',
@@ -382,18 +400,25 @@ export default function MapView({
       
       layer.on({
         click: (e: any) => {
-          if (simulationMode) {
-            onSimulationClick?.(e.latlng.lat, e.latlng.lng);
+          if (simulationModeRef.current) {
+            e.originalEvent?.stopPropagation();
+            layer.closePopup?.();
+            onSimulationClickRef.current?.(e.latlng.lat, e.latlng.lng);
             return;
           }
           e.originalEvent?.stopPropagation();
-          onFeatureSelect?.({
+          onFeatureSelectRef.current?.({
             layerKey: 'ska_area',
             layerName: `Kesenjangan SKA - ${p.nama}`,
             geometryType: feature.geometry?.type || 'Polygon',
             properties: p,
             coordinates: e.latlng ? [e.latlng.lng, e.latlng.lat] : undefined,
           });
+        },
+        popupopen: () => {
+          if (simulationModeRef.current) {
+            layer.closePopup?.();
+          }
         },
         mouseover: (e: any) => {
           const l = e.target;
@@ -505,7 +530,12 @@ export default function MapView({
               eventHandlers={{
                 click: (e) => {
                   e.originalEvent?.stopPropagation();
-                  onFeatureSelect?.({
+                  if (simulationModeRef.current) {
+                    e.target?.closePopup?.();
+                    onSimulationClickRef.current?.(point.lat, point.lon);
+                    return;
+                  }
+                  onFeatureSelectRef.current?.({
                     layerKey: point.properties._layer_key || 'titik_rekomendasi',
                     layerName: point.layerName,
                     geometryType: point.geometryType,
@@ -547,7 +577,12 @@ export default function MapView({
             eventHandlers={{
               click: (e) => {
                 e.originalEvent?.stopPropagation();
-                onFeatureSelect?.({
+                if (simulationModeRef.current) {
+                  e.target?.closePopup?.();
+                  onSimulationClickRef.current?.(point.lat, point.lon);
+                  return;
+                }
+                onFeatureSelectRef.current?.({
                   layerKey: point.properties._layer_key || 'halte_existing',
                   layerName: point.layerName,
                   geometryType: point.geometryType,
@@ -599,11 +634,12 @@ export default function MapView({
               eventHandlers={{
                 click: (e) => {
                   e.originalEvent?.stopPropagation();
-                  if (simulationMode) {
-                    onSimulationClick?.(rec.lat, rec.lon);
+                  if (simulationModeRef.current) {
+                    e.target?.closePopup?.();
+                    onSimulationClickRef.current?.(rec.lat, rec.lon);
                     return;
                   }
-                  onFeatureSelect?.({
+                  onFeatureSelectRef.current?.({
                     layerKey: 'rekomendasi_halte',
                     layerName: `Rekomendasi Halte #${rec.rank}`,
                     geometryType: 'Point',
@@ -652,20 +688,145 @@ export default function MapView({
           target={activeRecommendation ?? null}
           onClear={onClearActiveRecommendation}
         />
+        {/* What-If Simulation Buffer, Beacon, & Result Marker */}
         {simulationPoint && (
-          <CircleMarker
-            center={[simulationPoint.lat, simulationPoint.lon]}
-            radius={9}
-            pane="pointsPane"
-            pathOptions={{ color: '#ffffff', weight: 3, fillColor: '#f43f5e', fillOpacity: 0.95 }}
-          >
-            <Popup>
-              <div className="p-1 text-sm">
-                <div className="font-bold">Titik Simulasi</div>
-                <div>{simulationPoint.lon.toFixed(5)}, {simulationPoint.lat.toFixed(5)}</div>
-              </div>
-            </Popup>
-          </CircleMarker>
+          <>
+            {/* 400m Service Coverage Buffer Circle */}
+            <Circle
+              center={[simulationPoint.lat, simulationPoint.lon]}
+              radius={simulationResult?.radius_layanan || 400}
+              pane="areaRekomendasiPane"
+              pathOptions={{
+                color: '#10b981',
+                weight: 2.5,
+                dashArray: '6, 6',
+                fillColor: '#10b981',
+                fillOpacity: 0.16,
+              }}
+            >
+              <Tooltip sticky>
+                <div className="text-xs font-semibold text-emerald-950">
+                  <span>🎯 Jangkauan Layanan Halte Simulasi ({simulationResult?.radius_layanan || 400}m)</span>
+                </div>
+              </Tooltip>
+            </Circle>
+
+            {/* Radar Pulsing Rings */}
+            <CircleMarker
+              center={[simulationPoint.lat, simulationPoint.lon]}
+              radius={20}
+              pane="beaconPane"
+              pathOptions={{
+                color: '#10b981',
+                weight: 1.5,
+                fillColor: '#10b981',
+                fillOpacity: 0.20,
+              }}
+            />
+            <CircleMarker
+              center={[simulationPoint.lat, simulationPoint.lon]}
+              radius={13}
+              pane="beaconPane"
+              pathOptions={{
+                color: '#059669',
+                weight: 2,
+                fillColor: '#34d399',
+                fillOpacity: 0.35,
+              }}
+            />
+
+            {/* Center Pin Marker with Rich Popup */}
+            <CircleMarker
+              center={[simulationPoint.lat, simulationPoint.lon]}
+              radius={8}
+              pane="pointsPane"
+              pathOptions={{
+                color: '#ffffff',
+                weight: 3,
+                fillColor: '#047857',
+                fillOpacity: 1,
+              }}
+            >
+              <Popup autoClose={false}>
+                <div className="p-1 min-w-[220px] text-slate-800">
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-[10px] uppercase tracking-wider mb-1">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                    <span>Hasil Simulasi Halte Baru</span>
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 leading-tight mb-2">
+                    Proyeksi Halte Baru (What-If)
+                  </h3>
+
+                  {simulationResult ? (
+                    <div className="space-y-1.5 text-xs border-t border-slate-100 pt-1.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-500">Radius Layanan:</span>
+                        <span className="font-semibold text-slate-800">{simulationResult.radius_layanan} m</span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-500">Penurunan GAP:</span>
+                        <span className="font-bold text-emerald-700 font-mono">
+                          -{simulationResult.estimasi_penurunan_gap_score.toFixed(3)}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-500">Est. Penduduk Baru:</span>
+                        <span className="font-bold text-slate-900 font-mono">
+                          +{simulationResult.estimasi_penduduk_baru.toLocaleString('id-ID')} jiwa
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-500">Area Terdampak:</span>
+                        <span className="font-semibold text-slate-800">{simulationResult.jumlah_area_terdampak} blok</span>
+                      </div>
+                      {simulationResult.area_gap_terdekat && (
+                        <div className="rounded bg-slate-50 p-1.5 text-[11px] text-slate-600">
+                          <span className="text-slate-400">GAP Terdekat:</span>{' '}
+                          <span className="font-semibold text-slate-800">{simulationResult.area_gap_terdekat.display_name}</span>{' '}
+                          ({simulationResult.area_gap_terdekat.distance_m.toFixed(0)}m)
+                        </div>
+                      )}
+                      {simulationResult.carbon_footprint && (
+                        <div className="mt-1 rounded-lg bg-emerald-50 border border-emerald-200/80 p-2 text-xs">
+                          <div className="flex items-center justify-between text-emerald-950 font-bold text-[11px]">
+                            <span>🌱 Dekarbonisasi:</span>
+                            <span className="text-emerald-700 font-mono">
+                              -{simulationResult.carbon_footprint.co2_reduction_tons_year} Ton/thn
+                            </span>
+                          </div>
+                          <div className="mt-0.5 flex items-center justify-between text-[10px] text-emerald-800">
+                            <span>🌲 ~{simulationResult.carbon_footprint.tree_equivalent.toLocaleString('id-ID')} pohon</span>
+                            <span>🛵 ~{simulationResult.carbon_footprint.daily_vehicle_trips_reduced} trip/hari</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-2 text-xs text-slate-500 flex items-center gap-2">
+                      <svg className="animate-spin h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <span>Menghitung dampak spasial...</span>
+                    </div>
+                  )}
+
+                  <div className="mt-2 pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                    <span>{simulationPoint.lat.toFixed(5)}, {simulationPoint.lon.toFixed(5)}</span>
+                    {onClearSimulation && (
+                      <button
+                        type="button"
+                        onClick={onClearSimulation}
+                        className="text-red-500 hover:text-red-700 font-sans font-semibold"
+                      >
+                        ✕ Hapus
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          </>
         )}
       </MapContainer>
     </div>
