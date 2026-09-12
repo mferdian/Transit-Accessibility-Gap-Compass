@@ -1,5 +1,5 @@
 # ============================
-# Backend (FastAPI / Python, dikelola via uv)
+# Backend (FastAPI / Python)
 # ============================
 backend/.venv/
 backend/__pycache__/
@@ -10,7 +10,9 @@ backend/.env
 backend/.env.*
 !backend/.env.example
 
-# Dataset mentah (biasanya besar, jangan ikut commit)
+# ============================
+# Dataset mentah
+# ============================
 backend/data/*.geojson
 backend/data/*.csv
 backend/data/*.shp
@@ -23,6 +25,11 @@ backend/app/data/**/*.geojson
 backend/app/data/**/*.csv
 backend/app/data/**/*.shp
 backend/app/data/**/*.zip
+
+# GeoJSON yang dibutuhkan aplikasi saat runtime
+!backend/data/geojson/
+!backend/data/geojson/DEMOGRAFI[ ]DI[ ]KOTA[ ]SURABAYA.geojson
+!backend/data/geojson/HALTE[ ]DI[ ]KOTA[ ]SURABAYA.geojson
 
 # ============================
 # Frontend (Next.js)
@@ -37,7 +44,7 @@ frontend/*.tsbuildinfo
 frontend/next-env.d.ts
 
 # ============================
-# Umum (Editor, OS, Logs)
+# Editor, OS, dan log
 # ============================
 .vscode/
 .idea/
