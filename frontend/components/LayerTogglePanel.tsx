@@ -37,7 +37,7 @@ function ToggleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors ${
+      className={`flex min-h-12 w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors sm:min-h-0 ${
         active
           ? 'border-slate-800 bg-slate-900 text-white'
           : 'border-slate-200 bg-white text-slate-800 hover:border-slate-400'
@@ -66,7 +66,7 @@ export default function LayerTogglePanel({
   loadingLayers
 }: LayerTogglePanelProps) {
   return (
-    <div className="absolute left-6 bottom-6 z-[20] w-80 bg-white/92 backdrop-blur-md p-4 rounded-lg shadow-xl border border-slate-200">
+    <div className="absolute inset-x-3 bottom-3 z-[20] max-h-[48svh] overflow-y-auto rounded-lg border border-slate-200 bg-white/92 p-3 shadow-xl backdrop-blur-md sm:inset-x-auto sm:left-6 sm:bottom-6 sm:w-80 sm:max-w-[calc(100vw-3rem)] sm:max-h-[82svh] sm:p-4">
       <div className="mb-3">
         <h2 className="text-sm font-bold text-slate-800">Kontrol Layer Peta</h2>
         <p className="text-xs text-slate-500">Nyalakan atau matikan area dan titik</p>

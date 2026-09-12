@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable react-hooks/refs */
+
 import { useEffect, useRef } from 'react';
 import { useMapEvents } from 'react-leaflet';
 
