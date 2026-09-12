@@ -25,10 +25,10 @@ export default function SimulationPanel({
   onCloseResult,
 }: SimulationPanelProps) {
   return (
-    <div className="absolute left-6 top-[28rem] z-[20] w-80 overflow-hidden rounded-lg border border-slate-200 bg-white/94 shadow-xl backdrop-blur-md">
+    <div className="absolute inset-x-3 bottom-3 z-[20] max-h-[50svh] overflow-hidden rounded-lg border border-slate-200 bg-white/94 shadow-xl backdrop-blur-md sm:inset-x-auto sm:left-6 sm:top-[28rem] sm:bottom-auto sm:w-80 sm:max-w-[calc(100vw-3rem)] sm:max-h-[calc(100svh-30rem)]">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <h2 className="text-sm font-bold text-slate-900">Simulator What-If</h2>
             <p className="text-xs text-slate-500">
               {isActive ? 'Klik titik di peta untuk simulasi' : 'Mode klik peta nonaktif'}
@@ -37,7 +37,7 @@ export default function SimulationPanel({
           <button
             type="button"
             onClick={onToggleMode}
-            className={`rounded-md px-3 py-1.5 text-xs font-bold ${
+            className={`min-h-9 rounded-md px-3 py-1.5 text-xs font-bold sm:min-h-0 ${
               isActive ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200'
             }`}
             aria-pressed={isActive}
@@ -47,7 +47,7 @@ export default function SimulationPanel({
         </div>
       </div>
 
-      <div className="space-y-3 px-4 py-3 text-sm">
+      <div className="max-h-[calc(50svh-4.5rem)] space-y-3 overflow-y-auto px-3 py-3 text-sm sm:max-h-[calc(100svh-34.5rem)] sm:px-4">
         {isLoading && (
           <div className="rounded-md bg-blue-50 px-3 py-2 text-blue-900">
             Menghitung dampak titik baru...
@@ -62,7 +62,7 @@ export default function SimulationPanel({
 
         {result && (
           <>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
               <div className="rounded-md bg-slate-50 p-3">
                 <p className="text-xs text-slate-500">Radius</p>
                 <p className="text-lg font-bold text-slate-900">{result.radius_layanan} m</p>
@@ -94,7 +94,7 @@ export default function SimulationPanel({
               <div className="rounded-md border border-slate-200 p-3">
                 <p className="text-xs font-semibold uppercase text-slate-500">Area GAP Terdekat</p>
                 <p className="mt-1 font-bold text-slate-900">{result.area_gap_terdekat.display_name}</p>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-600 min-[360px]:grid-cols-2">
                   <span>Jarak: {formatNumber(result.area_gap_terdekat.distance_m, 1)} m</span>
                   <span>Gap: {formatNumber(result.area_gap_terdekat.gap_score, 3)}</span>
                   <span>Luas: {formatNumber(result.area_gap_terdekat.luas_m2)} m2</span>
@@ -106,7 +106,7 @@ export default function SimulationPanel({
             <button
               type="button"
               onClick={onCloseResult}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:min-h-0"
             >
               Bersihkan Hasil
             </button>

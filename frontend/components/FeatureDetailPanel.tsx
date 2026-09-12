@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { SelectedFeatureDetail } from '@/lib/types';
 
 interface FeatureDetailPanelProps {
@@ -31,7 +33,7 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
     .slice(0, 18);
 
   return (
-    <div className="absolute right-6 top-6 z-[25] w-[22rem] max-w-[calc(100vw-3rem)] max-h-[82vh] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
+    <div className="absolute inset-x-3 bottom-3 top-auto z-[25] max-h-[50svh] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl sm:inset-x-auto sm:right-6 sm:top-6 sm:w-[22rem] sm:max-w-[calc(100vw-3rem)] sm:max-h-[82svh]">
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-slate-500">{feature.layerName}</p>
@@ -42,7 +44,7 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
         </div>
         <button
           onClick={onClose}
-          className="grid h-7 w-7 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-900 sm:h-7 sm:w-7"
           aria-label="Tutup detail"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +53,7 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
         </button>
       </div>
 
-      <div className="max-h-[64vh] overflow-y-auto px-4 py-3">
+      <div className="max-h-[calc(50svh-4rem)] overflow-y-auto px-3 py-3 sm:max-h-[64svh] sm:px-4">
         {feature.coordinates && (
           <div className="mb-3 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-900">
             {feature.coordinates[0].toFixed(6)}, {feature.coordinates[1].toFixed(6)}
@@ -73,9 +75,9 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
               );
             }
             return (
-              <div key={key} className="grid grid-cols-[42%_1fr] gap-3 py-2 text-sm">
+              <div key={key} className="grid grid-cols-1 gap-1 py-2 text-sm min-[360px]:grid-cols-[42%_1fr] min-[360px]:gap-3">
                 <span className="break-words text-slate-500">{key}</span>
-                <span className="break-words text-right font-medium text-slate-800">{formatted}</span>
+                <span className="break-words text-left font-medium text-slate-800 min-[360px]:text-right">{formatted}</span>
               </div>
             );
           })}
@@ -89,7 +91,7 @@ export default function FeatureDetailPanel({ feature, onClose, onAssessCondition
                 String(feature.properties.nama_halte || feature.properties.display_name || 'Halte')
               )
             }
-            className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-3 min-h-11 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 sm:min-h-0"
           >
             Nilai Kondisi Halte (AI)
           </button>

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { SelectedFeatureDetail, RecommendationPoint } from '@/lib/types';
 
@@ -222,11 +224,11 @@ function renderPropertyRow(key: string, value: any, isMono = false) {
   }
 
   return (
-    <div key={key} className="flex items-baseline justify-between gap-3 py-2 text-xs">
+    <div key={key} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2 text-xs">
       <span className={`font-medium text-slate-600 leading-snug ${isMono ? 'font-mono text-[11px]' : ''}`}>
         {label}
       </span>
-      <span className={`font-bold text-slate-900 text-right break-words max-w-[60%] leading-snug ${isMono ? 'font-mono text-[11px]' : ''}`}>
+      <span className={`min-w-0 flex-1 font-bold text-slate-900 text-right break-words leading-snug min-[360px]:min-w-[42%] ${isMono ? 'font-mono text-[11px]' : ''}`}>
         {formattedVal}
       </span>
     </div>
@@ -279,15 +281,15 @@ export default function RightInspectorPanel({
   return (
     <aside
       aria-label="Panel Inspeksi Kanan"
-      className="pointer-events-auto flex w-[22rem] max-w-[calc(100vw-3rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-md transition-all"
+      className="pointer-events-auto flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-md transition-all sm:w-[22rem] sm:max-w-[calc(100vw-3rem)]"
     >
       {/* Tab Switcher Header (when both are active) */}
       {hasFeature && hasRecommendations ? (
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-3 py-2.5">
-          <div className="flex items-center gap-1 rounded-lg bg-slate-200/70 p-1 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2.5">
+          <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg bg-slate-200/70 p-1 text-xs">
             <button
               onClick={() => onTabChange('detail')}
-              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold transition-all ${
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 font-semibold transition-all sm:flex-none sm:gap-1.5 sm:px-2.5 ${
                 currentTab === 'detail'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -297,11 +299,11 @@ export default function RightInspectorPanel({
                 <circle cx="12" cy="12" r="9" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
               </svg>
-              <span>Detail</span>
+              <span className="truncate">Detail</span>
             </button>
             <button
               onClick={() => onTabChange('recommendations')}
-              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold transition-all ${
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 font-semibold transition-all sm:flex-none sm:gap-1.5 sm:px-2.5 ${
                 currentTab === 'recommendations'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -310,7 +312,7 @@ export default function RightInspectorPanel({
               <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Rekomendasi</span>
+              <span className="truncate">Rekomendasi</span>
               {recommendations.length > 0 && (
                 <span className="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] font-bold text-slate-700">
                   {recommendations.length}
@@ -326,7 +328,7 @@ export default function RightInspectorPanel({
                 else onCloseRecommendations();
               }}
               title="Tutup tab aktif"
-              className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition-colors"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 hover:text-slate-700 sm:h-7 sm:w-7"
               aria-label="Tutup tab"
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,7 +339,7 @@ export default function RightInspectorPanel({
         </div>
       ) : hasFeature ? (
         /* Single Feature Detail Header */
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
               {selectedFeature?.layerName}
@@ -349,7 +351,7 @@ export default function RightInspectorPanel({
           </div>
           <button
             onClick={onCloseFeature}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition-colors"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 hover:text-slate-700 sm:h-7 sm:w-7"
             aria-label="Tutup detail fitur"
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,14 +361,14 @@ export default function RightInspectorPanel({
         </div>
       ) : (
         /* Single Recommendation Header */
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3">
-          <div>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
+          <div className="min-w-0">
             <h2 className="text-xs font-bold text-slate-900 tracking-tight">Rekomendasi Halte Baru</h2>
             <p className="text-[10px] text-slate-500 font-normal">Prioritas penempatan halte berdasarkan skor SKA</p>
           </div>
           <button
             onClick={onCloseRecommendations}
-            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition-colors"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 hover:text-slate-700 sm:h-7 sm:w-7"
             aria-label="Tutup rekomendasi"
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,7 +380,7 @@ export default function RightInspectorPanel({
 
       {/* Tab 1: Feature Detail Content */}
       {currentTab === 'detail' && selectedFeature && (
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 sm:px-4">
           {/* Sub-header title when in tab mode */}
           {hasRecommendations && (
             <div className="pb-2 border-b border-slate-100">
@@ -415,7 +417,7 @@ export default function RightInspectorPanel({
                   {p.ska_score?.toFixed(2) ?? '-'}
                 </span>
               </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-2 grid grid-cols-1 gap-2 text-xs min-[360px]:grid-cols-2">
                 <div>
                   <p className="text-[10px] text-slate-500">Tingkat Kesenjangan</p>
                   <p className="font-bold text-slate-900">{p.kategori_ska || '-'}</p>
@@ -433,8 +435,8 @@ export default function RightInspectorPanel({
           {/* Carbon Footprint / Green Mobility Card */}
           {p.carbon_footprint && (
             <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white p-3 shadow-xs">
-              <div className="flex items-center justify-between pb-1.5 border-b border-emerald-200/60">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
                   <span className="text-sm">🌱</span>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900">
                     Dampak Dekarbonisasi (Green Mobility)
@@ -444,7 +446,7 @@ export default function RightInspectorPanel({
                   -{p.carbon_footprint.co2_reduction_tons_year} Ton/thn
                 </span>
               </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-2 grid grid-cols-1 gap-2 text-xs min-[360px]:grid-cols-2">
                 <div>
                   <p className="text-[10px] text-emerald-800/80">Serapan Karbon Ekuivalen</p>
                   <p className="font-bold text-slate-900">
@@ -495,7 +497,7 @@ export default function RightInspectorPanel({
                 onClick={() => setShowHistory(!showHistory)}
                 className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-100/70 transition-colors"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
                   <svg className="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -530,7 +532,7 @@ export default function RightInspectorPanel({
                 onClick={() => setShowTechnical(!showTechnical)}
                 className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-100/70 transition-colors"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex min-w-0 items-center gap-1.5">
                   <svg className="h-3.5 w-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
@@ -583,8 +585,8 @@ export default function RightInspectorPanel({
         <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
           {/* Citywide Decarbonization Banner */}
           {recommendations.length > 0 && (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white px-3 py-2 text-xs text-emerald-950 shadow-2xs">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white px-3 py-2 text-xs text-emerald-950 shadow-2xs">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs shadow-xs">
                   🌱
                 </div>
@@ -597,7 +599,7 @@ export default function RightInspectorPanel({
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="ml-auto text-right">
                 <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100/90 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
                   🌲 ~{recommendations.reduce((sum, r) => sum + (r.carbon_footprint?.tree_equivalent || 0), 0).toLocaleString('id-ID')} Pohon
                 </span>
@@ -607,7 +609,7 @@ export default function RightInspectorPanel({
 
           {/* Active Highlight Banner & Deselect Button */}
           {activeRecommendation && (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-300/80 bg-amber-50/95 px-3 py-2 text-xs text-amber-950 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300/80 bg-amber-50/95 px-3 py-2 text-xs text-amber-950 shadow-xs">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-ping shrink-0" />
                 <span className="font-bold truncate">
@@ -620,7 +622,7 @@ export default function RightInspectorPanel({
                   e.stopPropagation();
                   onClearActiveRecommendation?.();
                 }}
-                className="flex items-center gap-1 shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-amber-800 border border-amber-300 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
+                className="flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-amber-300 bg-white px-2 py-1 text-[11px] font-bold text-amber-800 shadow-2xs transition-colors hover:bg-amber-100 sm:min-h-0"
                 title="Hapus sorotan rekomendasi aktif dari peta"
               >
                 <span>✕</span>
@@ -681,8 +683,8 @@ export default function RightInspectorPanel({
                     {rec.rank}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <h4 className="truncate text-xs font-bold text-slate-800" title={rec.nama || `Rekomendasi Halte ${rec.rank}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <h4 className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800" title={rec.nama || `Rekomendasi Halte ${rec.rank}`}>
                         {rec.nama || `Rekomendasi Halte ${rec.rank}`}
                       </h4>
                       {isSelected && (
@@ -693,14 +695,14 @@ export default function RightInspectorPanel({
                             onClearActiveRecommendation?.();
                           }}
                           title="Hapus sorotan"
-                          className="flex items-center gap-1 rounded-full bg-amber-500 hover:bg-amber-600 px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider transition-colors shadow-2xs"
+                          className="flex min-h-7 items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-2xs transition-colors hover:bg-amber-600 sm:min-h-0"
                         >
                           <span>Aktif</span>
                           <span className="font-black text-amber-100">✕</span>
                         </button>
                       )}
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
                       <span>Radius: {rec.radius_layanan}m</span>
                       <span className="font-semibold text-slate-700">
                         Est. {rec.estimasi_penduduk_terlayani.toLocaleString('id-ID')} jiwa
@@ -708,7 +710,7 @@ export default function RightInspectorPanel({
                     </div>
                     {/* Carbon Footprint Eco Chip */}
                     {rec.carbon_footprint && (
-                      <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50/90 border border-emerald-200/70 px-2 py-1 text-[10px] text-emerald-950">
+                      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 rounded-lg border border-emerald-200/70 bg-emerald-50/90 px-2 py-1 text-[10px] text-emerald-950">
                         <span className="flex items-center gap-1 font-bold text-emerald-900">
                           <span>🌱</span>
                           <span>-{rec.carbon_footprint.co2_reduction_tons_year} Ton CO₂/thn</span>

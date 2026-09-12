@@ -14,6 +14,10 @@ html, body {
   overflow: hidden;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -67,10 +71,42 @@ body {
 .leaflet-popup-content {
   margin: 12px 14px !important;
   line-height: 1.4 !important;
+  max-width: min(72vw, 280px) !important;
+  overflow-wrap: anywhere;
 }
 
 .leaflet-popup-tip {
   box-shadow: 0 8px 16px -2px rgba(15, 23, 42, 0.15) !important;
+}
+
+@media (max-width: 767px) {
+  .leaflet-top.leaflet-left {
+    bottom: calc(42svh + 24px) !important;
+    left: 12px !important;
+  }
+
+  .leaflet-top.leaflet-left .leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+  }
+
+  .leaflet-popup {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  .leaflet-control-attribution {
+    max-width: calc(100vw - 24px) !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .leaflet-top.leaflet-left {
+    bottom: 20px !important;
+    left: 20px !important;
+  }
 }
 
 

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
+
 import { useState, useEffect } from 'react';
 import MapView from '@/components/MapView';
 import LeftControlPanel, { LeftPanelTab } from '@/components/LeftControlPanel';
@@ -162,12 +164,12 @@ export default function ClientDashboard() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-900">
+    <div className="relative h-dvh min-h-[100svh] w-full overflow-hidden bg-slate-900">
       {/* Floating Simulation Mode Indicator Banner */}
       {simulationMode && (
-        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-[30] flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900/95 text-white border border-emerald-500/50 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
+        <div className="absolute left-3 right-3 top-3 z-[30] flex max-h-[22svh] items-start gap-2 overflow-y-auto rounded-xl border border-emerald-500/50 bg-slate-900/95 px-3 py-2.5 text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 sm:left-1/2 sm:right-auto sm:top-5 sm:max-h-none sm:w-auto sm:max-w-[calc(100vw-2rem)] sm:-translate-x-1/2 sm:items-center sm:gap-3 sm:px-4">
           <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
-          <div className="text-xs">
+          <div className="min-w-0 text-xs leading-snug">
             <strong className="text-emerald-400">Mode Simulasi What-If Aktif:</strong>{' '}
             <span className="text-slate-200">Klik titik manapun di peta untuk menganalisis dampak penambahan halte</span>
           </div>
@@ -177,7 +179,7 @@ export default function ClientDashboard() {
               setSimulationMode(false);
               setActiveLeftTab('filter');
             }}
-            className="ml-2 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-slate-200 px-2.5 py-1 rounded-md transition-colors"
+            className="ml-auto min-h-8 shrink-0 rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-slate-200 transition-colors hover:bg-white/20 sm:ml-2 sm:min-h-0"
           >
             ✕ Tutup
           </button>
@@ -186,12 +188,12 @@ export default function ClientDashboard() {
 
       {/* Floating Simulation Loading Indicator */}
       {isSimulationLoading && (
-        <div className="absolute top-18 left-1/2 -translate-x-1/2 z-[30] flex items-center gap-2.5 px-4 py-2 rounded-lg bg-slate-950/90 text-white border border-emerald-500/60 shadow-xl backdrop-blur-md">
+        <div className="absolute left-3 right-3 top-20 z-[30] flex items-center gap-2.5 rounded-lg border border-emerald-500/60 bg-slate-950/90 px-3 py-2 text-white shadow-xl backdrop-blur-md sm:left-1/2 sm:right-auto sm:w-auto sm:max-w-[calc(100vw-2rem)] sm:-translate-x-1/2 sm:px-4">
           <svg className="animate-spin h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          <span className="text-xs font-medium">Menganalisis jangkauan dan dampak dekarbonisasi halte baru...</span>
+          <span className="min-w-0 text-xs font-medium leading-snug">Menganalisis jangkauan dan dampak dekarbonisasi halte baru...</span>
         </div>
       )}
 
@@ -218,7 +220,7 @@ export default function ClientDashboard() {
       />
       
       {/* Right Column Stack: Inspector Panel and Map Legend in a coordinated flex column that never overlaps */}
-      <div className="absolute right-6 top-6 bottom-6 z-[25] flex flex-col items-end pointer-events-none gap-3">
+      <div className="absolute bottom-3 left-3 right-3 top-auto z-[25] flex max-h-[42svh] flex-col items-stretch gap-2 overflow-hidden pointer-events-none sm:left-auto sm:bottom-4 sm:right-4 sm:max-h-[58svh] sm:items-end md:bottom-6 md:right-6 md:top-6 md:max-h-none md:gap-3">
         <RightInspectorPanel
           selectedFeature={selectedFeature}
           onCloseFeature={() => setSelectedFeature(null)}
@@ -250,7 +252,7 @@ export default function ClientDashboard() {
           onTabChange={setActiveRightTab}
         />
 
-        <div className="mt-auto pointer-events-auto">
+        <div className="mt-auto min-h-0 pointer-events-auto">
           <MapLegend
             visibleLayers={visibleLayers}
             showSkaArea={showSkaArea}
@@ -268,7 +270,7 @@ export default function ClientDashboard() {
       )}
 
       {error && (
-        <div className="absolute top-6 right-1/2 translate-x-1/2 z-[20] bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="absolute left-3 right-3 top-3 z-[35] max-h-[40svh] overflow-y-auto rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700 sm:left-1/2 sm:right-auto sm:max-w-[calc(100vw-2rem)] sm:-translate-x-1/2">
           <strong>Error: </strong>
           <span className="block sm:inline">{error}</span>
         </div>

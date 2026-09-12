@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="h-full antialiased">
-      <body className="h-screen w-screen overflow-hidden m-0 p-0">{children}</body>
+      <body className="h-dvh min-h-[100svh] w-full overflow-hidden m-0 p-0">{children}</body>
     </html>
   );
 }

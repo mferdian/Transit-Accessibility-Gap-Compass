@@ -92,11 +92,11 @@ export default function LeftControlPanel({
 
   if (isMinimized) {
     return (
-      <div className="absolute top-5 left-5 z-[20]">
+      <div className="absolute left-3 right-3 top-3 z-[20] max-w-[calc(100vw-1.5rem)] sm:left-5 sm:right-auto sm:top-5">
         <button
           type="button"
           onClick={() => setIsMinimized(false)}
-          className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white/95 px-3.5 py-2 shadow-lg backdrop-blur-md transition-all hover:bg-white hover:border-slate-300"
+          className="flex min-h-11 max-w-full flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur-md transition-all hover:border-slate-300 hover:bg-white sm:min-h-0 sm:gap-2.5 sm:px-3.5"
         >
           <div className="h-5 w-5 rounded bg-slate-900 text-white flex items-center justify-center">
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -104,7 +104,7 @@ export default function LeftControlPanel({
               <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
             </svg>
           </div>
-          <span className="text-xs font-semibold text-slate-800">Transit Gap Compass</span>
+          <span className="min-w-0 text-xs font-semibold text-slate-800">Transit Gap Compass</span>
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
             {activeLayersCount} Layer
           </span>
@@ -122,17 +122,17 @@ export default function LeftControlPanel({
   }
 
   return (
-    <div className="absolute top-5 left-5 z-[20] w-[21.5rem] max-w-[calc(100vw-2.5rem)] flex flex-col rounded-xl border border-slate-200/90 bg-white/95 shadow-xl backdrop-blur-md overflow-hidden">
+    <div className="absolute left-3 right-3 top-3 z-[20] flex max-h-[44svh] flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white/95 shadow-xl backdrop-blur-md sm:left-5 sm:right-auto sm:top-5 sm:w-[21.5rem] sm:max-w-[calc(100vw-2.5rem)] md:max-h-[calc(100svh-2.5rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-3 py-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div className="h-6 w-6 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0">
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
             </svg>
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xs font-bold text-slate-900 tracking-tight leading-tight">
               Transit Gap Compass
             </h1>
@@ -142,7 +142,7 @@ export default function LeftControlPanel({
         <button
           type="button"
           onClick={() => setIsMinimized(true)}
-          className="grid h-6 w-6 place-items-center rounded text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition-colors"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition-colors sm:h-6 sm:w-6"
           title="Perkecil Panel"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,11 +152,11 @@ export default function LeftControlPanel({
       </div>
 
       {/* Segmented Tab Navigation */}
-      <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 mx-3.5 mt-3 rounded-lg text-xs">
+      <div className="mx-3 mt-3 grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 text-xs sm:mx-3.5">
         <button
           type="button"
           onClick={() => onTabChange('filter')}
-          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md transition-all text-xs ${
+          className={`flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] transition-all sm:min-h-0 sm:gap-1.5 sm:px-2 sm:text-xs ${
             activeTab === 'filter'
               ? 'bg-white text-slate-900 shadow-sm font-semibold'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-normal'
@@ -173,13 +173,13 @@ export default function LeftControlPanel({
             <line x1="9" y1="8" x2="15" y2="8" />
             <line x1="17" y1="16" x2="23" y2="16" />
           </svg>
-          <span>Bobot</span>
+          <span className="truncate">Bobot</span>
         </button>
 
         <button
           type="button"
           onClick={() => onTabChange('layers')}
-          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md transition-all text-xs ${
+          className={`flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] transition-all sm:min-h-0 sm:gap-1.5 sm:px-2 sm:text-xs ${
             activeTab === 'layers'
               ? 'bg-white text-slate-900 shadow-sm font-semibold'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-normal'
@@ -190,7 +190,7 @@ export default function LeftControlPanel({
             <polyline points="2 17 12 22 22 17" />
             <polyline points="2 12 12 17 22 12" />
           </svg>
-          <span>Layer</span>
+          <span className="truncate">Layer</span>
           <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-semibold">
             {activeLayersCount}
           </span>
@@ -199,7 +199,7 @@ export default function LeftControlPanel({
         <button
           type="button"
           onClick={() => onTabChange('simulation')}
-          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md transition-all text-xs ${
+          className={`flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] transition-all sm:min-h-0 sm:gap-1.5 sm:px-2 sm:text-xs ${
             activeTab === 'simulation'
               ? 'bg-white text-slate-900 shadow-sm font-semibold'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-normal'
@@ -212,7 +212,7 @@ export default function LeftControlPanel({
             <line x1="12" y1="6" x2="12" y2="2" />
             <line x1="12" y1="22" x2="12" y2="18" />
           </svg>
-          <span>What-If</span>
+          <span className="truncate">What-If</span>
           {simulationMode && (
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
           )}
@@ -220,7 +220,7 @@ export default function LeftControlPanel({
       </div>
 
       {/* Tab Content */}
-      <div className="p-3.5 max-h-[calc(100vh-14rem)] overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-3.5">
         {/* ==================== TAB 1: BOBOT SKA ==================== */}
         {activeTab === 'filter' && (
           <div className="space-y-3.5">
@@ -311,7 +311,7 @@ export default function LeftControlPanel({
                 type="button"
                 onClick={onApply}
                 disabled={isLoading}
-                className="w-full py-2 px-3 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50 sm:min-h-0"
               >
                 {isLoading ? (
                   <>
@@ -331,7 +331,7 @@ export default function LeftControlPanel({
                   type="button"
                   onClick={onToggleRecommendations}
                   disabled={isLoading}
-                  className="w-full py-2 px-3 bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50 disabled:opacity-50 sm:min-h-0"
                 >
                   <svg className="h-3.5 w-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="4" y="3" width="16" height="16" rx="2" />
@@ -349,7 +349,7 @@ export default function LeftControlPanel({
                 <button
                   type="button"
                   onClick={onOpenHalteAudit}
-                  className="w-full py-2 px-3 bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50 sm:min-h-0"
                 >
                   <svg className="h-3.5 w-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -373,7 +373,7 @@ export default function LeftControlPanel({
             <button
               type="button"
               onClick={onToggleSkaArea}
-              className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all ${
+              className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all sm:min-h-0 ${
                 showSkaArea
                   ? 'border-slate-800 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
@@ -404,7 +404,7 @@ export default function LeftControlPanel({
                   key={layer.key}
                   type="button"
                   onClick={() => onToggleLayer(layer.key)}
-                  className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all ${
+                  className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all sm:min-h-0 ${
                     active
                       ? 'border-slate-800 bg-slate-900 text-white'
                       : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
@@ -434,7 +434,7 @@ export default function LeftControlPanel({
         {activeTab === 'simulation' && (
           <div className="space-y-3">
             {/* Toggle Card */}
-            <div className={`flex items-center justify-between gap-3 rounded-lg border p-3 transition-all ${
+              <div className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 transition-all ${
               simulationMode
                 ? 'border-emerald-500/80 bg-emerald-50/80 shadow-xs'
                 : 'border-slate-200 bg-slate-50'
@@ -451,7 +451,7 @@ export default function LeftControlPanel({
               <button
                 type="button"
                 onClick={onToggleSimulationMode}
-                className={`rounded px-3 py-1.5 text-xs font-bold transition-all shadow-xs ${
+                className={`ml-auto min-h-9 shrink-0 rounded px-3 py-1.5 text-xs font-bold transition-all shadow-xs sm:min-h-0 ${
                   simulationMode
                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                     : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
@@ -469,7 +469,7 @@ export default function LeftControlPanel({
                   <button
                     type="button"
                     onClick={onSampleSimulation}
-                    className="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold rounded-lg text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-100 sm:min-h-0"
                   >
                     <span>🎯</span>
                     <span>Coba Simulasi Titik Contoh (Pusat Kota)</span>
@@ -494,7 +494,7 @@ export default function LeftControlPanel({
                   <button
                     type="button"
                     onClick={onSampleSimulation}
-                    className="w-full py-2 px-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-semibold rounded-lg text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:bg-slate-50 sm:min-h-0"
                   >
                     <span>🎯</span>
                     <span>Atau Coba Titik Contoh (Surabaya Pusat)</span>
@@ -527,7 +527,7 @@ export default function LeftControlPanel({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
                   <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
                     <p className="text-[10px] text-slate-500 font-medium">Radius Layanan</p>
                     <p className="text-sm font-bold text-slate-900 font-mono">{simulationResult.radius_layanan} m</p>
@@ -563,7 +563,7 @@ export default function LeftControlPanel({
                   <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-xs space-y-1">
                     <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Area Gap Terdekat</p>
                     <p className="font-semibold text-slate-900 text-xs">{simulationResult.area_gap_terdekat.display_name}</p>
-                    <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-600 pt-1 border-t border-slate-100 font-mono">
+                    <div className="grid grid-cols-1 gap-1 border-t border-slate-100 pt-1 text-[10px] text-slate-600 min-[360px]:grid-cols-2 font-mono">
                       <div>Jarak: {formatNumber(simulationResult.area_gap_terdekat.distance_m, 1)} m</div>
                       <div>Gap: {formatNumber(simulationResult.area_gap_terdekat.gap_score, 3)}</div>
                       <div>Luas: {formatNumber(simulationResult.area_gap_terdekat.luas_m2)} m²</div>
@@ -584,7 +584,7 @@ export default function LeftControlPanel({
                         -{simulationResult.carbon_footprint.co2_reduction_tons_year} Ton/thn
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5">
+                    <div className="grid grid-cols-1 gap-2 pt-0.5 text-[11px] min-[360px]:grid-cols-2">
                       <div>
                         <p className="text-[9px] text-emerald-800/75">Serapan Ekuivalen</p>
                         <p className="font-bold text-slate-900">
@@ -597,7 +597,7 @@ export default function LeftControlPanel({
                           🛵 ~{simulationResult.carbon_footprint.daily_vehicle_trips_reduced.toLocaleString('id-ID')} trip/hari
                         </p>
                       </div>
-                      <div className="col-span-2 pt-1 border-t border-emerald-100/80 flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between gap-2 border-t border-emerald-100/80 pt-1 text-[10px] min-[360px]:col-span-2">
                         <span className="text-emerald-800/75">Efisiensi Bahan Bakar:</span>
                         <span className="font-bold text-slate-800">
                           ⛽ ~{simulationResult.carbon_footprint.annual_fuel_liters_saved.toLocaleString('id-ID')} liter/thn
